@@ -10,17 +10,17 @@
     />
   </head>
   <body>
-    <nav class="navbar">
-      <div class="container">
-        <h1 class="brand">HerbaTerra</h1>
-        <ul class="nav-links">
+    <nav>
+      <div>
+        <h1>HerbaTerra</h1>
+        <ul>
           <li><a href="{{ url_for('main.index') }}">Home</a></li>
           <li><a href="{{ url_for('main.about') }}">About</a></li>
         </ul>
       </div>
     </nav>
 
-    <main class="container">{% block content %}{% endblock %}</main>
+    <main>{% block content %}{% endblock %}</main>
 
     <footer>
       <p>&copy; 2025 HerbaTerra. All rights reserved.</p>

@@ -7,7 +7,10 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
     
     # Register blueprints
-    from app.routes import main_bp
+    from app.routes import main_bp, play_bp, profile_bp, quiz_bp
     app.register_blueprint(main_bp)
+    app.register_blueprint(play_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(quiz_bp)
     
     return app
