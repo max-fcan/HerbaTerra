@@ -97,6 +97,11 @@ function initEarthBackground(container) {
   const textureBase = (container.dataset.earthTextureBase || '').replace(/\/$/, '');
   const texturePath = file => `${textureBase}/${file}`;
 
+  if (!textureBase) {
+    console.warn('[Earth] Missing data-earth-texture-base attribute.');
+    return;
+  }
+
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
     55,
@@ -110,7 +115,11 @@ function initEarthBackground(container) {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  if ('outputColorSpace' in renderer) {
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+  } else {
+    renderer.outputEncoding = THREE.sRGBEncoding;
+  }
 
   container.innerHTML = '';
   renderer.domElement.style.width = '100%';
@@ -122,7 +131,9 @@ function initEarthBackground(container) {
   earthGroup.rotation.z = -degToRad(23.4);
   scene.add(earthGroup);
 
-  const loader = new THREE.TextureLoader();
+  const manager = new THREE.LoadingManager();
+  manager.onError = url => console.error('[Earth] Texture failed to load:', url);
+  const loader = new THREE.TextureLoader(manager);
   const geoDetail = 12;
   const geometry = new THREE.IcosahedronGeometry(1, geoDetail);
 
@@ -133,7 +144,9 @@ function initEarthBackground(container) {
     bumpScale: 0.04,
   });
   [baseMat.map, baseMat.specularMap, baseMat.bumpMap].forEach(tex => {
-    if (tex) tex.colorSpace = THREE.SRGBColorSpace;
+    if (!tex) return;
+    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    else tex.encoding = THREE.sRGBEncoding;
   });
   const earthMesh = new THREE.Mesh(geometry, baseMat);
   earthGroup.add(earthMesh);
@@ -143,7 +156,10 @@ function initEarthBackground(container) {
     blending: THREE.AdditiveBlending,
     transparent: true,
   });
-  if (lightsMat.map) lightsMat.map.colorSpace = THREE.SRGBColorSpace;
+  if (lightsMat.map) {
+    if ('colorSpace' in lightsMat.map) lightsMat.map.colorSpace = THREE.SRGBColorSpace;
+    else lightsMat.map.encoding = THREE.sRGBEncoding;
+  }
   const lightsMesh = new THREE.Mesh(geometry, lightsMat);
   earthGroup.add(lightsMesh);
 
@@ -155,7 +171,10 @@ function initEarthBackground(container) {
     alphaMap: loader.load(texturePath('05_earthcloudmaptrans.jpg')),
   });
   ['map', 'alphaMap'].forEach(key => {
-    if (cloudsMat[key]) cloudsMat[key].colorSpace = THREE.SRGBColorSpace;
+    const tex = cloudsMat[key];
+    if (!tex) return;
+    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    else tex.encoding = THREE.sRGBEncoding;
   });
   const cloudsMesh = new THREE.Mesh(geometry, cloudsMat);
   cloudsMesh.scale.setScalar(1.003);
