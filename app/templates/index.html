@@ -23,3 +23,20 @@
   </div>
 </section>
 {% endblock %}
+
+{% block background_wrapper %}
+  {% import "partials/earth.html" as earth %}
+  {% call earth.earth_wrap() %}
+    {{ self.nav() }}
+    {{ self.page_content() }}
+    {{ self.footer() }}
+  {% endcall %}
+{% endblock %}
+
+{% block scripts %}
+  <script
+    type="module"
+    src="{{ url_for('static', filename='js/earth.js') }}"
+  ></script>
+  {{ super() }}
+{% endblock %}
