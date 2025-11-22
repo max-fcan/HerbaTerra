@@ -8,24 +8,41 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/gradient.css') }}"
+    />
   </head>
   <body>
-    <nav>
-      <div>
-        <h1>HerbaTerra</h1>
-        <ul>
+    {% import "partials/gradient.html" as gradient %}
+    {% call gradient.gradient_wrap() %}
+      {% block nav %}
+      <nav class="site-nav">
+        <div class="nav-brand">
+          <a href="{{ url_for('main.index') }}">HerbaTerra</a>
+        </div>
+        <ul class="nav-links">
           <li><a href="{{ url_for('main.index') }}">Home</a></li>
           <li><a href="{{ url_for('main.about') }}">About</a></li>
+          <li><a href="{{ url_for('play.index') }}">Play</a></li>
+          <li><a href="{{ url_for('quiz.index') }}">Quiz</a></li>
+          <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
         </ul>
-      </div>
-    </nav>
+      </nav>
+      {% endblock %}
 
-    <main>{% block content %}{% endblock %}</main>
+      {% block page_content %}
+      <main class="page-shell">{% block content %}{% endblock %}</main>
+      {% endblock %}
 
-    <footer>
-      <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
-    </footer>
+      {% block footer %}
+      <footer class="site-footer">
+        <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
+      </footer>
+      {% endblock %}
+    {% endcall %}
 
+    <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   </body>
 </html>

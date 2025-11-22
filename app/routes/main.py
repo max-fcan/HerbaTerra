@@ -11,5 +11,5 @@ def index():
 
 @main_bp.route('/about')
 def about():
-    """About page (kept for backward compatibility)"""
-    return render_template('play/index.html')
+    """About page"""
+    return render_template('about.html')
