@@ -19,35 +19,31 @@
 
     {% block background_wrapper %}
       {% call gradient.gradient_wrap() %}
-        {{ self.nav() }}
-        {{ self.page_content() }}
-        {{ self.footer() }}
+        {% block nav %}
+        <nav class="site-nav">
+          <div class="nav-brand">
+            <a href="{{ url_for('main.index') }}">HerbaTerra</a>
+          </div>
+          <ul class="nav-links">
+            <li><a href="{{ url_for('main.index') }}">Home</a></li>
+            <li><a href="{{ url_for('main.about') }}">About</a></li>
+            <li><a href="{{ url_for('play.index') }}">Play</a></li>
+            <li><a href="{{ url_for('quiz.index') }}">Quiz</a></li>
+            <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
+          </ul>
+        </nav>
+        {% endblock %}
+
+        {% block page_content %}
+        <main class="page-shell">{% block content %}{% endblock %}</main>
+        {% endblock %}
+
+        {% block footer %}
+        <footer class="site-footer">
+          <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
+        </footer>
+        {% endblock %}
       {% endcall %}
-    {% endblock %}
-
-    {% block nav %}
-    <nav class="site-nav">
-      <div class="nav-brand">
-        <a href="{{ url_for('main.index') }}">HerbaTerra</a>
-      </div>
-      <ul class="nav-links">
-        <li><a href="{{ url_for('main.index') }}">Home</a></li>
-        <li><a href="{{ url_for('main.about') }}">About</a></li>
-        <li><a href="{{ url_for('play.index') }}">Play</a></li>
-        <li><a href="{{ url_for('quiz.index') }}">Quiz</a></li>
-        <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
-      </ul>
-    </nav>
-    {% endblock %}
-
-    {% block page_content %}
-    <main class="page-shell">{% block content %}{% endblock %}</main>
-    {% endblock %}
-
-    {% block footer %}
-    <footer class="site-footer">
-      <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
-    </footer>
     {% endblock %}
 
     {% block scripts %}
