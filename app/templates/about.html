@@ -6,3 +6,7 @@
   <p>Learn about our mission to share herbal knowledge and natural remedies.</p>
 </section>
 {% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
+  {{ super() }}
+{% endblock %}

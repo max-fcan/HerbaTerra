@@ -34,9 +34,9 @@
 {% endblock %}
 
 {% block scripts %}
-  <script
-    type="module"
-    src="{{ url_for('static', filename='js/earth.js') }}"
-  ></script>
+  <script type="module">
+    import { initializeEarthBackground } from "{{ url_for('static', filename='js/earth.js') }}";
+    initializeEarthBackground({{ background_quality | default("medium") | tojson }});
+  </script>
   {{ super() }}
 {% endblock %}

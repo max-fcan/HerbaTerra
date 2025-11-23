@@ -1,9 +1,9 @@
-'use strict';
+"use strict";
 
-import * as THREE from './vendor/three/three.module.js';
-import { OrbitControls } from './vendor/three/OrbitControls.js';
+import * as THREE from "./vendor/three/three.module.js";
+import { OrbitControls } from "./vendor/three/OrbitControls.js";
 
-const degToRad = deg => (deg * Math.PI) / 180;
+const degToRad = (deg) => (deg * Math.PI) / 180;
 
 function getFresnelMat({ rimHex = 0x0088ff, facingHex = 0x000000 } = {}) {
   const uniforms = {
@@ -79,8 +79,8 @@ function getStarfield(numStars, spriteUrl) {
   }
 
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(verts, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
 
   const mat = new THREE.PointsMaterial({
     size: 0.2,
@@ -93,14 +93,62 @@ function getStarfield(numStars, spriteUrl) {
   return new THREE.Points(geo, mat);
 }
 
-function initEarthBackground(container) {
-  const textureBase = (container.dataset.earthTextureBase || '').replace(/\/$/, '');
-  const texturePath = file => `${textureBase}/${file}`;
+function initEarthBackground(container, quality = "medium") {
+  const textureBase = (container.dataset.earthTextureBase || "").replace(
+    /\/$/,
+    ""
+  );
+  const texturePath = (file) => `${textureBase}/${file}`;
 
   if (!textureBase) {
-    console.warn('[Earth] Missing data-earth-texture-base attribute.');
+    console.warn("[Earth] Missing data-earth-texture-base attribute.");
     return;
   }
+
+  const textureFiles = (() => {
+    switch (quality) {
+      case "low":
+        console.info("[Earth] Using low quality textures.");
+        return {
+          earthmap: "00_earthmap1k.jpg",
+          earthbump: "01_earthbump1k.jpg",
+          earthspec: "02_earthspec1k.jpg",
+          earthlights: "03_earthlights1k.jpg",
+        };
+      case "high":
+        console.info("[Earth] Using high quality textures.");
+        return {
+          earthmap: "00_earthmap10k.jpg",
+          earthbump: "01_earthbump10k.jpg",
+          earthspec: "02_earthspec10k.jpg",
+          earthlights: "03_earthlights10k.jpg",
+        };
+      case "medium":
+        console.info("[Earth] Using medium quality textures.");
+        return {
+          earthmap: "00_earthmap4k.jpg",
+          earthbump: "01_earthbump4k.jpg",
+          earthspec: "02_earthspec4k.jpg",
+          earthlights: "03_earthlights4k.jpg",
+        };
+      default:
+        console.info(
+          `[Earth] Unknown quality setting "${quality}", defaulting to medium.`
+        );
+        return {
+          earthmap: "00_earthmap4k.jpg",
+          earthbump: "01_earthbump4k.jpg",
+          earthspec: "02_earthspec4k.jpg",
+          earthlights: "03_earthlights4k.jpg",
+        };
+    }
+  })();
+
+  const { earthmap, earthbump, earthspec, earthlights } = textureFiles;
+
+  const earthcloudmap = "04_earthcloudmap.jpg";
+  const earthcloudmaptrans = "05_earthcloudmaptrans.jpg";
+
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(
@@ -115,16 +163,16 @@ function initEarthBackground(container) {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  if ('outputColorSpace' in renderer) {
+  if ("outputColorSpace" in renderer) {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
   } else {
     renderer.outputEncoding = THREE.sRGBEncoding;
   }
 
-  container.innerHTML = '';
-  renderer.domElement.style.width = '100%';
-  renderer.domElement.style.height = '100%';
-  renderer.domElement.style.pointerEvents = 'none';
+  container.innerHTML = "";
+  renderer.domElement.style.width = "100%";
+  renderer.domElement.style.height = "100%";
+  renderer.domElement.style.pointerEvents = "none";
   container.appendChild(renderer.domElement);
 
   const earthGroup = new THREE.Group();
@@ -132,48 +180,50 @@ function initEarthBackground(container) {
   scene.add(earthGroup);
 
   const manager = new THREE.LoadingManager();
-  manager.onError = url => console.error('[Earth] Texture failed to load:', url);
+  manager.onError = (url) =>
+    console.error("[Earth] Texture failed to load:", url);
   const loader = new THREE.TextureLoader(manager);
   const geoDetail = 12;
   const geometry = new THREE.IcosahedronGeometry(1, geoDetail);
 
   const baseMat = new THREE.MeshPhongMaterial({
-    map: loader.load(texturePath('00_earthmap1k.jpg')),
-    specularMap: loader.load(texturePath('02_earthspec1k.jpg')),
-    bumpMap: loader.load(texturePath('01_earthbump1k.jpg')),
+    map: loader.load(texturePath(earthmap)),
+    specularMap: loader.load(texturePath(earthspec)),
+    bumpMap: loader.load(texturePath(earthbump)),
     bumpScale: 0.04,
   });
-  [baseMat.map, baseMat.specularMap, baseMat.bumpMap].forEach(tex => {
+  [baseMat.map, baseMat.specularMap, baseMat.bumpMap].forEach((tex) => {
     if (!tex) return;
-    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
     else tex.encoding = THREE.sRGBEncoding;
   });
   const earthMesh = new THREE.Mesh(geometry, baseMat);
   earthGroup.add(earthMesh);
 
   const lightsMat = new THREE.MeshBasicMaterial({
-    map: loader.load(texturePath('03_earthlights1k.jpg')),
+    map: loader.load(texturePath(earthlights)),
     blending: THREE.AdditiveBlending,
     transparent: true,
   });
   if (lightsMat.map) {
-    if ('colorSpace' in lightsMat.map) lightsMat.map.colorSpace = THREE.SRGBColorSpace;
+    if ("colorSpace" in lightsMat.map)
+      lightsMat.map.colorSpace = THREE.SRGBColorSpace;
     else lightsMat.map.encoding = THREE.sRGBEncoding;
   }
   const lightsMesh = new THREE.Mesh(geometry, lightsMat);
   earthGroup.add(lightsMesh);
 
   const cloudsMat = new THREE.MeshStandardMaterial({
-    map: loader.load(texturePath('04_earthcloudmap.jpg')),
+    map: loader.load(texturePath(earthcloudmap)),
     transparent: true,
     opacity: 0.65,
     blending: THREE.AdditiveBlending,
-    alphaMap: loader.load(texturePath('05_earthcloudmaptrans.jpg')),
+    alphaMap: loader.load(texturePath(earthcloudmaptrans)),
   });
-  ['map', 'alphaMap'].forEach(key => {
+  ["map", "alphaMap"].forEach((key) => {
     const tex = cloudsMat[key];
     if (!tex) return;
-    if ('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+    if ("colorSpace" in tex) tex.colorSpace = THREE.SRGBColorSpace;
     else tex.encoding = THREE.sRGBEncoding;
   });
   const cloudsMesh = new THREE.Mesh(geometry, cloudsMat);
@@ -185,7 +235,7 @@ function initEarthBackground(container) {
   glowMesh.scale.setScalar(1.01);
   earthGroup.add(glowMesh);
 
-  const stars = getStarfield(1500, texturePath('stars/circle.png'));
+  const stars = getStarfield(1500, texturePath("stars/circle.png"));
   scene.add(stars);
 
   const sunLight = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -206,7 +256,7 @@ function initEarthBackground(container) {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   };
-  window.addEventListener('resize', handleResize);
+  window.addEventListener("resize", handleResize);
 
   function animate() {
     earthMesh.rotation.y += 0.0018;
@@ -221,9 +271,11 @@ function initEarthBackground(container) {
 
   animate();
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.querySelector('#earth-canvas');
-  if (!container) return;
-  initEarthBackground(container);
-});
+// Wrap initialization in DOMContentLoaded in a function to allow quality parameter
+export function initializeEarthBackground(quality = "medium") {
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.querySelector("#earth-canvas");
+    if (!container) return;
+    initEarthBackground(container, quality);
+  });
+}

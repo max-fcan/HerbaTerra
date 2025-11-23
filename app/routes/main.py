@@ -6,7 +6,7 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Home page"""
-    return render_template('index.html')
+    return render_template('index.html', background_quality='medium')
 
 
 @main_bp.route('/about')
