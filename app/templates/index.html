@@ -2,6 +2,9 @@
 
 {% block title %}Home - HerbaTerra{% endblock %}
 
+{% set background_type = "earth" %}
+{% set background_quality = background_quality | default("medium") %}
+
 {% block content %}
 <section>
   <h1>Welcome to HerbaTerra</h1>
@@ -22,21 +25,4 @@
     <p>Connect with other herb enthusiasts</p>
   </div>
 </section>
-{% endblock %}
-
-{% block background_wrapper %}
-  {% import "partials/earth.html" as earth %}
-  {% call earth.earth_wrap() %}
-    {{ self.nav() }}
-    {{ self.page_content() }}
-    {{ self.footer() }}
-  {% endcall %}
-{% endblock %}
-
-{% block scripts %}
-  <script type="module">
-    import { initializeEarthBackground } from "{{ url_for('static', filename='js/earth.js') }}";
-    initializeEarthBackground({{ background_quality | default("medium") | tojson }});
-  </script>
-  {{ super() }}
 {% endblock %}
