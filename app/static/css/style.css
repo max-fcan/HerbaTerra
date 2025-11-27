@@ -111,6 +111,26 @@ p {
   color: #cdd4ff;
 }
 
+.earth-bg {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #03030a;
+}
+
+#earth-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.earth-bg .page-content {
+  position: relative;
+  z-index: 1;
+}
+
 @media (max-width: 700px) {
   .site-nav {
     flex-direction: column;
