@@ -1,5 +1,8 @@
 requests
 Flask
-Werkzeug
-python-dotenv
 pyinaturalist
+python-dotenv
+pytest
+reverse-geocoder
+SQLAlchemy
+Werkzeug
