@@ -7,7 +7,7 @@ import logging
 from functools import cache
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Mapping, Sequence, Tuple
+from typing import Dict, Iterable, Mapping, Optional, Sequence, Tuple
 
 import reverse_geocoder as rg
 
@@ -63,18 +63,20 @@ class LocationTags:
     admin2: str = ""
     cc: str = ""
     continent: str = "Unknown"
+    error: Optional[str] = None
 
-    def as_dict(self) -> Dict[str, str]:
+    def as_dict(self) -> Dict[str, Optional[str]]:
         return {
             "name": self.name,
             "admin1": self.admin1,
             "admin2": self.admin2,
             "cc": self.cc,
             "continent": self.continent,
+            "error": self.error,
         }
 
 
-def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | None:
+def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | Optional[int]:
     """Validate and normalize a (lat, lon) tuple to floats within valid ranges."""
     try:
         lat = float(coord[0])
@@ -85,7 +87,7 @@ def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | N
 
     if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
         LOGGER.warning("Coordinate out of bounds (lat, lon): %s", coord)
-        return None
+        return 1
 
     return (lat, lon)
 
@@ -184,8 +186,10 @@ class LocationTagger:
         Returns a LocationTags instance with name, admin1, admin2, cc, and continent.
         """
         normalized = _normalize_coordinate((latitude, longitude))
-        if not normalized:
-            return LocationTags()
+        if normalized == 1:
+            return LocationTags(error="OOB")
+        elif not normalized or isinstance(normalized, int):
+            return LocationTags(error="Invalid")
 
         matches = self._search([normalized])
         if not matches:
@@ -209,10 +213,10 @@ class LocationTagger:
 
         for coord in coordinates:
             normalized = _normalize_coordinate(coord)
-            if not normalized:
+            if not normalized: # TODO: Fix type error
                 output[coord] = LocationTags()
                 continue
-            normalized_coords.append((coord, normalized))
+            normalized_coords.append((coord, normalized)) # TODO: Fix type error
 
         if not normalized_coords:
             return output
@@ -248,7 +252,7 @@ def country_to_continent(country_code: str) -> str:
     return _default_tagger().country_to_continent(country_code)
 
 
-def reverse_geocode(latitude: float, longitude: float) -> Dict[str, str]:
+def reverse_geocode(latitude: float, longitude: float) -> Dict[str, Optional[str]]:
     """
     Reverse geocode a single coordinate pair (lat, lon).
 
@@ -259,7 +263,7 @@ def reverse_geocode(latitude: float, longitude: float) -> Dict[str, str]:
 
 def reverse_geocode_many(
     coordinates: list[Tuple[float, float]],
-) -> Dict[Tuple[float, float], Dict[str, str]]:
+) -> Dict[Tuple[float, float], Dict[str, Optional[str]]]:
     """
     Reverse geocode multiple coordinate pairs (lat, lon).
 
