@@ -213,11 +213,14 @@ class LocationTagger:
 
         for coord in coordinates:
             normalized = _normalize_coordinate(coord)
-            if not normalized: # TODO: Fix type error
-                output[coord] = LocationTags()
+            if normalized == 1:
+                output[coord] = LocationTags(error="OOB")
                 continue
-            normalized_coords.append((coord, normalized)) # TODO: Fix type error
-
+            elif not normalized or isinstance(normalized, int):
+                output[coord] = LocationTags(error="Invalid")
+                continue
+            normalized_coords.append((coord, normalized))
+            
         if not normalized_coords:
             return output
 
@@ -243,7 +246,7 @@ DEFAULT_TAGGER: LocationTagger | None = None
 def _default_tagger() -> LocationTagger:
     global DEFAULT_TAGGER
     if DEFAULT_TAGGER is None:
-        DEFAULT_TAGGER = LocationTagger(country_continent_csv=_COUNTRY_CONTINENT_MODIFIED_CSV) # temp
+        DEFAULT_TAGGER = LocationTagger(country_continent_csv=_COUNTRY_CONTINENT_MODIFIED_CSV) # temp TODO: change from modified to official with country stored as lists
     return DEFAULT_TAGGER
 
 
