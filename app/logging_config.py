@@ -100,15 +100,15 @@ def configure_app_logging(app: Flask) -> None:
 
     # Default format: [time] LEVEL | parent/file:line | message
     log_format = app.config.get(
-        "LOG_FORMAT",
+        "DEFAULT_LOG_FORMAT",
         "%(asctime)s | %(levelname)-7s | %(parent_file)s:%(lineno)-3d | %(message)s",
     )
-    datefmt = app.config.get("LOG_DATEFMT", "%Y-%m-%d %H:%M:%S")
+    datefmt = app.config.get("DEFAULT_LOG_DATEFMT", "%Y-%m-%d %H:%M:%S")
 
-    log_dir = app.config.get("LOG_DIR", "logs")
-    log_filename = app.config.get("LOG_FILE", "app.log")
-    max_bytes = int(app.config.get("LOG_MAX_BYTES", 10 * 1024 * 1024))
-    backup_count = int(app.config.get("LOG_BACKUP_COUNT", 5))
+    log_dir = app.config.get("DEFAULT_LOG_DIR", "logs")
+    log_filename = app.config.get("DEFAULT_LOG_FILE", "app.log")
+    max_bytes = int(app.config.get("DEFAULT_LOG_MAX_BYTES", 10 * 1024 * 1024))
+    backup_count = int(app.config.get("DEFAULT_LOG_BACKUP_COUNT", 5))
 
     os.makedirs(log_dir, exist_ok=True)
 

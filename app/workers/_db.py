@@ -1,12 +1,15 @@
-# db.py
-
 from dataclasses import dataclass
 import sqlite3
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-DB_PATH = Path() # TODO: Fill it with actual path to sqlite db
-LOGGER: Any = None # TODO: Initialise logger
+from app.logging_config import configure_logging
+
+LOGGER: Any = configure_logging(
+    name="db_worker",
+    log_filename="db_worker.log",
+)
+DB_PATH = Path("data/mapillary_images.db")
 
 _DB_COLUMNS = {
     ("image_id", "TEXT PRIMARY KEY"),
@@ -122,103 +125,6 @@ def insert_images(
     cx.close()
 
 
-def get_random_image(
-    has_plant_only: bool = False,
-    country_code: Optional[str] = None,
-    continent: Optional[str] = None,
-) -> Optional[Dict[str, Any]]:
-    """
-    Return a single random image row as a dict, or None if no match.
-
-    Filters:
-    - has_plant_only: only images with has_plant=1.
-    - country_code: filter by country_code (e.g. "FR").
-    - continent: filter by continent tag (e.g. "Europe").
-    """
-    conn = get_connection()
-    cur = conn.cursor()
-
-    conditions = []
-    params = []
-
-    if has_plant_only:
-        conditions.append("has_plant = 1")
-
-    if country_code is not None:
-        conditions.append("country_code = ?")
-        params.append(country_code)
-
-    if continent is not None:
-        conditions.append("continent = ?")
-        params.append(continent)
-
-    where_clause = ""
-    if conditions:
-        where_clause = "WHERE " + " AND ".join(conditions)
-
-    sql = f"""
-        SELECT
-            image_id,
-            lon,
-            lat,
-            captured_at,
-            has_plant,
-            plant_labels,
-            country_code,
-            country_name,
-            admin1,
-            city,
-            continent
-        FROM images
-        {where_clause}
-        ORDER BY RANDOM()
-        LIMIT 1;
-    """
-
-    cur.execute(sql, params)
-    row = cur.fetchone()
-    conn.close()
-
-    if row is None:
-        return None
-
-    return {k: row[k] for k in row.keys()}
-
-
-def count_images(
-    has_plant_only: bool = False,
-    country_code: Optional[str] = None,
-    continent: Optional[str] = None,
-) -> int:
-    conn = get_connection()
-    cur = conn.cursor()
-
-    conditions = []
-    params = []
-
-    if has_plant_only:
-        conditions.append("has_plant = 1")
-
-    if country_code is not None:
-        conditions.append("country_code = ?")
-        params.append(country_code)
-
-    if continent is not None:
-        conditions.append("continent = ?")
-        params.append(continent)
-
-    where_clause = ""
-    if conditions:
-        where_clause = "WHERE " + " AND ".join(conditions)
-
-    sql = f"SELECT COUNT(*) FROM images {where_clause};"
-    cur.execute(sql, params)
-    (count,) = cur.fetchone()
-    conn.close()
-    return int(count)
-
-
 if __name__ == "__main__":
     init_db()
     print("DB initialized at", DB_PATH)
-    print("Total images:", count_images())

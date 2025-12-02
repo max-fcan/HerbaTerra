@@ -1,6 +1,7 @@
 requests
 Flask
 pyinaturalist
+pymongo
 python-dotenv
 pytest
 reverse-geocoder
