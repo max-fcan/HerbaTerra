@@ -7,7 +7,7 @@ import os
 from logging.config import dictConfig
 from flask import Flask
 from typing import Optional
-
+from pathlib import Path
 
 class ShortPathFilter(logging.Filter):
     """Attach `parent_file` = '<parent>/<filename>' to log records."""
@@ -26,7 +26,7 @@ def configure_logging(
     log_format: str = "%(asctime)s | %(levelname)-7s | %(parent_file)s:%(lineno)-3d | %(message)s",
     datefmt: str = "%Y-%m-%d %H:%M:%S",
     log_dir: str = "logs",
-    log_filename: Optional[str] = None,
+    log_filename: Optional[str | Path] = None,
     max_bytes: int = 1 * 1024 * 1024,
     backup_count: int = 5,
     in_terminal: bool = True,
@@ -46,7 +46,7 @@ def configure_logging(
 
     if log_filename:
         os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, log_filename)
+        log_path = os.path.join(log_dir, Path(log_filename).with_suffix(".log"))
         handlers["file"] = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "default",
@@ -106,7 +106,7 @@ def configure_app_logging(app: Flask) -> None:
     datefmt = app.config.get("DEFAULT_LOG_DATEFMT", "%Y-%m-%d %H:%M:%S")
 
     log_dir = app.config.get("DEFAULT_LOG_DIR", "logs")
-    log_filename = app.config.get("DEFAULT_LOG_FILE", "app.log")
+    log_filename = Path(app.config.get("DEFAULT_LOG_FILENAME", Path("app.log"))).with_suffix(".log")
     max_bytes = int(app.config.get("DEFAULT_LOG_MAX_BYTES", 10 * 1024 * 1024))
     backup_count = int(app.config.get("DEFAULT_LOG_BACKUP_COUNT", 5))
 
