@@ -58,20 +58,20 @@ LOGGER = _get_logger()
 class LocationTags:
     """Container for normalized reverse geocode output."""
 
-    name: str = ""
-    admin1: str = ""
-    admin2: str = ""
-    cc: str = ""
-    continent: str = "Unknown"
+    city: Optional[str] = None
+    admin1: Optional[str] = None
+    admin2: Optional[str] = None
+    country: Optional[str] = None
+    continent: Optional[str] = None
     error: Optional[str] = None
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         return {
-            "name": self.name,
+            "continent": self.continent,
+            "country": self.country,
+            "city": self.city,
             "admin1": self.admin1,
             "admin2": self.admin2,
-            "cc": self.cc,
-            "continent": self.continent,
             "error": self.error,
         }
 
@@ -93,14 +93,16 @@ def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | O
 
 
 @cache
-def _load_country_to_continent(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) -> Dict[str, str]:
+def _load_country_code_mapping(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) -> Dict[str, Dict[str, str]]:
     """
     Load country ⇒ continent mappings from the provided CSV file.
 
     Expects the Github iso3166 "Country and Continent Codes List" CSV with at least:
       - Two_Letter_Country_Code
+      - Country_Name
       - Continent_Name
     """
+    # Validate CSV path
     try:
         csv_path = Path(csv_path)
     except Exception as e:
@@ -111,13 +113,14 @@ def _load_country_to_continent(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) ->
         LOGGER.error("Expected country mapping file at %s but it is missing", csv_path)
         raise FileNotFoundError(f"Country mapping file missing: {csv_path}")
 
-    mapping: Dict[str, str] = {}
+    mapping: Dict[str, Dict[str, str]] = {}
     with csv_path.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for idx, row in enumerate(reader, start=2):  # start=2 accounts for header row
             code = (row.get("Two_Letter_Country_Code") or "").strip().upper()
+            country = (row.get("Country_Name") or "").split(',')[0].strip()
             continent = (row.get("Continent_Name") or "").strip()
-            if not code or not continent:
+            if not code or not continent or not country:
                 LOGGER.debug("Skipping row %s with incomplete data: %s", idx, row)
                 continue
 
@@ -129,7 +132,7 @@ def _load_country_to_continent(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) ->
                     existing,
                     continent,
                 )
-            mapping[code] = continent
+            mapping[code] = {'country': country, 'continent': continent}
 
     if not mapping:
         LOGGER.error("No country/continent mappings loaded from %s", csv_path)
@@ -144,15 +147,22 @@ class LocationTagger:
 
     def __init__(self, country_continent_csv: Path | str = _COUNTRY_CONTINENT_CSV):
         self.country_continent_csv = Path(country_continent_csv)
-        self._country_to_continent = _load_country_to_continent(self.country_continent_csv)
+        self._country_to_continent: Dict[str, Dict[str, str]] = _load_country_code_mapping(self.country_continent_csv)
         self._logger = LOGGER
 
-    def country_to_continent(self, country_code: str) -> str:
+    def country_code_to_continent(self, country_code: str) -> Optional[str]:
         """Return a continent name for a two-letter country code."""
         code = (country_code or "").strip().upper()
         if not code:
-            return "Unknown"
-        return self._country_to_continent.get(code, "Unknown")
+            return None
+        return self._country_to_continent.get(code, {}).get("continent")
+
+    def country_code_to_country_name(self, country_code: str) -> Optional[str]:
+        """Return a country name for a two-letter country code."""
+        code = (country_code or "").strip().upper()
+        if not code:
+            return None
+        return self._country_to_continent.get(code, {}).get("country")
 
     def _build_tags(self, match: Mapping[str, str] | None) -> LocationTags:
         if not match:
@@ -160,11 +170,11 @@ class LocationTagger:
 
         country_code = (match.get("cc") or "").strip().upper()
         return LocationTags(
-            name=match.get("name", ""),
+            city=match.get("name", ""),
             admin1=match.get("admin1", ""),
             admin2=match.get("admin2", ""),
-            cc=country_code,
-            continent=self.country_to_continent(country_code),
+            continent=self.country_code_to_continent(country_code),
+            country=self.country_code_to_country_name(country_code),
         )
 
     def _search(self, coordinates: Sequence[Tuple[float, float]]) -> list[Mapping[str, str]]:
@@ -185,17 +195,20 @@ class LocationTagger:
 
         Returns a LocationTags instance with name, admin1, admin2, cc, and continent.
         """
+        # Normalize and validate input coordinates
         normalized = _normalize_coordinate((latitude, longitude))
         if normalized == 1:
             return LocationTags(error="OOB")
         elif not normalized or isinstance(normalized, int):
             return LocationTags(error="Invalid")
 
+        # Perform reverse geocoding
         matches = self._search([normalized])
         if not matches:
             self._logger.info("No reverse geocode result for %s", normalized)
-            return LocationTags(cc="", continent="Unknown")
+            return LocationTags(error="NotFound")
 
+        # Build and return tags from the first (and only) result
         tags = self._build_tags(matches[0])
         self._logger.debug("Reverse geocoded %s -> %s", normalized, tags)
         return tags
@@ -250,16 +263,19 @@ def _default_tagger() -> LocationTagger:
     return DEFAULT_TAGGER
 
 
-def country_to_continent(country_code: str) -> str:
+def country_code_to_continent(country_code: str) -> Optional[str]:
     """Return a continent name for a two-letter country code."""
-    return _default_tagger().country_to_continent(country_code)
+    return _default_tagger().country_code_to_continent(country_code)
 
+def country_code_to_country_name(country_code: str) -> Optional[str]:
+    """Return a country name for a two-letter country code."""
+    return _default_tagger().country_code_to_country_name(country_code)
 
 def reverse_geocode(latitude: float, longitude: float) -> Dict[str, Optional[str]]:
     """
     Reverse geocode a single coordinate pair (lat, lon).
 
-    Returns a dict with name, admin1, admin2, cc, and continent.
+    Returns a dict with country, city, admin1, admin2, and continent.
     """
     return _default_tagger().reverse_geocode(latitude, longitude).as_dict()
 
