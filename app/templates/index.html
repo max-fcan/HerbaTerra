@@ -5,19 +5,7 @@ set background_type = "earth" %} {% set background_quality = background_quality
   <h1>Welcome to HerbaTerra</h1>
   <p>Your source for herbal knowledge and natural remedies</p>
 </section>
-
-<section class="section-grid">
-  <div>
-    <h2>Explore Herbs</h2>
-    <p>Discover a wide variety of herbs and their properties</p>
-  </div>
-  <div>
-    <h2>Learn More</h2>
-    <p>Educational resources about herbal remedies</p>
-  </div>
-  <div>
-    <h2>Community</h2>
-    <p>Connect with other herb enthusiasts</p>
-  </div>
-</section>
+<div class="play-button-container">
+  <a href="{{ url_for('play.index') }}" class="play-button">Play</a>
+</div>
 {% endblock %}

@@ -32,8 +32,6 @@
           <ul class="nav-links">
             <li><a href="{{ url_for('main.index') }}">Home</a></li>
             <li><a href="{{ url_for('main.about') }}">About</a></li>
-            <li><a href="{{ url_for('play.index') }}">Play</a></li>
-            <li><a href="{{ url_for('quiz.index') }}">Quiz</a></li>
             <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
           </ul>
         </nav>
@@ -49,7 +47,6 @@
       {% set footer_block %}
         {% block footer %}
         <footer class="site-footer">
-          <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
         </footer>
         {% endblock %}
       {% endset %}
