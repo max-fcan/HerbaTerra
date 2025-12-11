@@ -13,3 +13,10 @@ def index():
 def about():
     """About page"""
     return render_template('about.html')
+
+
+@main_bp.route('/home')
+def home():
+    """Alternate home/gallery route"""
+    # render the template in the `home` subfolder
+    return render_template('home/index.html', background_quality='medium')
