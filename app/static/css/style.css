@@ -134,6 +134,7 @@ section {
   transition: all 0.3s ease;
   width: 60px;
   overflow: hidden;
+  min-height: 300px;
 }
 
 .floating-nav:hover {
@@ -154,25 +155,51 @@ section {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 50px;
-  width: 100%;
+  gap: 0.75rem;
+  width: 50px;
   height: 50px;
-  background: rgba(107, 68, 35, 0.4);
+  background: transparent;
   color: #e8dccc;
   text-decoration: none;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
   transition: all 0.3s ease;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
+  border: 2px solid transparent;
   text-align: center;
-  padding: 0.5rem;
+  padding: 0;
   white-space: nowrap;
+  margin: 0 auto;
 }
 
-.floating-nav-button:hover,
-.floating-nav-button:focus-visible {
+.floating-nav-button::before {
+  content: attr(data-icon);
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  min-width: 1.8rem;
+}
+
+.floating-nav-button span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: none;
+}
+
+.floating-nav:hover .floating-nav-button {
+  background: rgba(107, 68, 35, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  justify-content: flex-start;
+  width: 100%;
+  margin: 0;
+}
+
+.floating-nav:hover .floating-nav-button span {
+  opacity: 1;
+  display: inline;
+}
+
+.floating-nav:hover .floating-nav-button:hover,
+.floating-nav:hover .floating-nav-button:focus-visible {
   background: rgba(107, 68, 35, 0.6);
   transform: scale(1.05);
   border-color: rgba(255, 255, 255, 0.4);
