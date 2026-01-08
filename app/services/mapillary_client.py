@@ -119,7 +119,8 @@ if __name__ == "__main__":
         limit=5,
         fields="id,captured_at,geometry,detections.id,detections.value",
     )
-    print("Got", len(images), "images")
     if images:
         from pprint import pprint
         pprint(images)
+    
+    print("Got", len(images), "images")

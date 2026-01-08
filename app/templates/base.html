@@ -35,12 +35,12 @@
     {% endblock %} {% endset %} {% set page_content_block %} {% block
     page_content %}
     <main class="page-shell">{% block content %}{% endblock %}</main>
-    {% endblock %} {% endset %} {% comment %} {% set footer_block %} {% block
+    {% endblock %} {% endset %} {% set footer_block %} {% block
     footer %}
     <footer class="site-footer">
       <p>&copy; 2025 HerbaTerra. All rights reserved.</p>
     </footer>
-    {% endblock %} {% endset %} {% endcomment %} {% if bg_type == "earth" %} {%
+    {% endblock %} {% endset %} {% if bg_type == "earth" %} {%
     call earth.earth_wrap() %} {{ nav_block }} {{ page_content_block }} {{
     footer_block }} {% endcall %} {% elif bg_type == "gradient" %} {% call
     gradient.gradient_wrap() %} {{ nav_block }} {{ page_content_block }} {{
