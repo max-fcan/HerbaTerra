@@ -21,7 +21,7 @@ class ShortPathFilter(logging.Filter):
 
 def configure_logging(
     *,
-    name: str,
+    logger_name: str,
     level: int = logging.INFO,
     log_format: str = "%(asctime)s | %(levelname)-7s | %(parent_file)s:%(lineno)-3d | %(message)s",
     datefmt: str = "%Y-%m-%d %H:%M:%S",
@@ -80,7 +80,7 @@ def configure_logging(
         }
     )
 
-    logger = logging.getLogger(name)
+    logger = logging.getLogger(logger_name)
     logger.setLevel(level)
     
     # Close existing handlers before removing them to avoid leaking file descriptors.

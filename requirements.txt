@@ -5,5 +5,4 @@ pymongo
 python-dotenv
 pytest
 reverse-geocoder
-SQLAlchemy
-Werkzeug
+sql30
