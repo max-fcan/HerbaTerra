@@ -21,17 +21,6 @@ class Config:
     
     
     # Databases
-    
-    ## MongoDB settings
-    MONGO_DB_URI_PASSWORD = os.environ.get("MONGO_DB_PASSWORD") or os.environ.get("MONGODB_PASSWORD")
-    ### Replace placeholder in URI with actual password if provided
-    if MONGO_DB_URI_PASSWORD:
-        MONGO_DB_URI = os.environ.get("MONGO_DB_URI", "").replace("<db_password>", MONGO_DB_URI_PASSWORD) or os.environ.get("MONGODB_URI", "").replace("<db_password>", MONGO_DB_URI_PASSWORD)
-    else:
-        MONGO_DB_URI = os.environ.get("MONGO_DB_URI", "") or os.environ.get("MONGODB_URI", "")
-    MAPILLARY_DB_NAME = "mapillary"
-    MAPILLARY_IMAGE_COLLECTION = "images"
-    
     ## SQLite settings
     APP_SQLITE_DB_PATH = Path("instance/app.db")
     
