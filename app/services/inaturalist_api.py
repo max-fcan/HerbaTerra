@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TypedDict, Literal, NotRequired, Sequence, cast
 
+import time
+
 import requests
 
 INAT_API_BASE_URL = "https://inaturalist.org/"
@@ -162,6 +164,9 @@ def get_observation(
 	extra: Sequence[Extra] | None = None,
 	timeout: float = 15.0,
 	session: requests.Session | None = None,
+	max_retries: int = 3,
+	backoff_factor: float = 0.5,
+	retry_statuses: Sequence[int] | None = None,
 ) -> ObservationResponse:
 	"""
 	Retrieve observations from iNaturalist.
@@ -259,8 +264,33 @@ def get_observation(
 		params["extra"] = extra
 
 	client = session or requests.Session()
-	response = client.get(f"{INAT_API_BASE_URL}/observations.json", params=params, timeout=timeout)
-	response.raise_for_status()
+	statuses = set(retry_statuses or [429, 500, 502, 503, 504])
+
+	attempt = 0
+	while True:
+		try:
+			response = client.get(
+				f"{INAT_API_BASE_URL}/observations.json",
+				params=params,
+				timeout=timeout,
+			)
+			if response.status_code in statuses:
+				raise requests.HTTPError(f"Retryable HTTP status: {response.status_code}", response=response)
+			response.raise_for_status()
+			break
+		except requests.RequestException:
+			if attempt >= max_retries:
+				raise
+			sleep_seconds = backoff_factor * (2**attempt)
+			if "response" in locals() and response is not None:
+				retry_after = response.headers.get("Retry-After")
+				if retry_after:
+					try:
+						sleep_seconds = max(sleep_seconds, float(retry_after))
+					except ValueError:
+						pass
+			time.sleep(sleep_seconds)
+			attempt += 1
 
 	data = response.json()
 	results: list[Observation]

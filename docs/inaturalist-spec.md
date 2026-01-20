@@ -47,12 +47,13 @@ The function returns a dict with:
 
 - If the API returns a list directly, it is accepted and normalized into `results`.
 - Network calls use `requests.Session` when provided.
+- Transient errors are retried with exponential backoff; retryable statuses default to 429/5xx and can be overridden.
 
 ---
 
 ### Scraper orchestration
 
-**File:** [app/services/inaturalist_store.py](../app/services/inaturalist_store.py)
+**File:** [app/workers/inaturalist_store.py](../app/workers/inaturalist_store.py)
 
 **Purpose**
 
@@ -69,7 +70,9 @@ The function returns a dict with:
   - empty results returned
   - a page returns fewer items than `per_page`
 - Adds a delay between pages (`delay_seconds`, default 0.5 seconds).
-- Persists each page using `save_inat_response(...)`.
+- Persists pages using a single SQLite connection and commits in batches (`commit_every_pages` / `commit_every_observations`).
+- Supports retry/backoff parameters passed through to the API client.
+- Optional checkpointing writes `next_page`, `updated_since`, and counters to disk to allow resuming.
 
 **Return value**
 `ScrapeSummary` with:
@@ -99,14 +102,15 @@ The module includes a `__main__` sample that scrapes plant observations with fil
 
 **Schema**
 
-- `users`: `id`, `login`, `name`, `raw_json`
-- `taxa`: `id`, `name`, `rank`, `iconic_taxon_name`, `ancestry`, `raw_json`
-- `observations`: core observation fields + `taxon_id`, `user_id`, `raw_json`
-- `photos`: `id`, `url`, `license_code`, `raw_json`
+- `users`: `id`, `login`, `name`, `raw_json` (compressed BLOB)
+- `taxa`: `id`, `name`, `rank`, `iconic_taxon_name`, `ancestry`, `raw_json` (compressed BLOB)
+- `observations`: core observation fields + `taxon_id`, `user_id`, `raw_json` (compressed BLOB)
+- `photos`: `id`, `url`, `license_code`, `raw_json` (compressed BLOB)
 - `observation_photos`: join table with `position`
-- `sounds`: `id`, `file_url`, `license_code`, `raw_json`
+- `sounds`: `id`, `file_url`, `license_code`, `raw_json` (compressed BLOB)
 - `observation_sounds`: join table
-- `identifications`: `id`, `observation_id`, `user_id`, `taxon_id`, `is_current`, `created_at`, `raw_json`
+- `identifications`: `id`, `observation_id`, `user_id`, `taxon_id`, `is_current`, `created_at`, `raw_json` (compressed BLOB)
+- `location_tags`: `observation_id`, `city`, `admin1`, `admin2`, `country`, `continent`, `error`
 
 **Indexes**
 Indexes exist for common access patterns:
@@ -115,23 +119,71 @@ Indexes exist for common access patterns:
 - `observation_photos`: observation id
 - `observation_sounds`: observation id
 - `identifications`: observation id, taxon
+- `location_tags`: country, continent
+
+**Data compression**
+
+- All `raw_json` fields are stored as compressed BLOBs using zlib (level 6), reducing DB size by ~50-70% and improving I/O performance.
 
 **Normalization details**
 
 - **Coordinates**: `latitude`/`longitude` are parsed to float. If missing/invalid, falls back to `geojson.coordinates`.
 - **Users & taxa**: upserted first and referenced by `user_id` and `taxon_id` (nullable).
 - **Photos**: URL normalization prefers original size by converting `square_url` to `original` when possible, otherwise falls back to largest available size.
-- **Identifications**: each identification is upserted, with `is_current` derived from `current`.
+- **Identifications**: each identification is upserted, with `is_current` derived from `current`. Useful for tracking community consensus, expert opinions, and observation quality evolution over time.
+- **Location tags**: reverse geocoded separately via `enrich_observations_with_location_tags()`, using the location tagging worker to add city/country/continent metadata.
 
 **Persistence flow**
 
 - `init_db(db_path)` sets up the schema.
 - `save_inat_response(db_path, response_json)` extracts `results` and delegates to `save_observations(...)`.
-- `save_observations(...)` upserts entities in a single transaction and returns the saved count.
+- `save_observations(...)` can reuse an existing connection and optionally defer commits for bulk loads.
 
 **Logging**
 
 - Logs to `logs/inaturalist_db.log` via `configure_logging`.
+
+**SQLite pragmas**
+
+- Connections enable `WAL` journal mode and `synchronous=NORMAL` to improve bulk-write performance.
+
+---
+
+## Location enrichment
+
+**Purpose**
+
+- Add reverse-geocoded location metadata (city, admin regions, country, continent) to observations with coordinates.
+
+**Function**
+`enrich_observations_with_location_tags(db_path, *, connection=None, batch_size=1000, skip_existing=True)`
+
+**Behavior**
+
+- Queries observations with coordinates but no location tags (when `skip_existing=True`).
+- Batch reverse geocodes using the `LocationTagger` from [app/workers/location_tags.py](../app/workers/location_tags.py).
+- Inserts results into the `location_tags` table, with one row per observation.
+- Processes in batches to handle large datasets efficiently.
+
+**Integration points**
+
+- Can be called after scraping completes, or as a separate enrichment step.
+- Reuses the same DB connection for efficient batch processing.
+- Errors (out of bounds, invalid coords, not found) are recorded in the `error` field.
+
+**Example use**
+
+```python
+from app.services.inaturalist_db import enrich_observations_with_location_tags
+
+# Enrich all observations that don't have location tags yet
+tagged_count = enrich_observations_with_location_tags(
+    "temp/inat_test.db",
+    batch_size=1000,
+    skip_existing=True,
+)
+print(f"Tagged {tagged_count} observations")
+```
 
 ---
 
