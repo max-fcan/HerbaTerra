@@ -78,6 +78,7 @@ These can be set in your shell or a `.env` file.
 
 ## Services and workers
 - `app/services/mapillary_client.py`: Requests-based Graph API wrapper with retry/backoff; requires a Mapillary token in env or Flask config.
+- iNaturalist pipeline: API client, scraper, and SQLite storage live in `app/services/inaturalist_api.py`, `app/services/inaturalist_store.py`, and `app/services/inaturalist_db.py`.
 - `app/workers/location_tags.py`: Reverse geocoding via `reverse_geocoder`, enriches with continent from `app/static/data/iso3166_country_codes_continents*.csv`. Run a sample with `python -m app.workers.location_tags`.
 
 ---
@@ -90,3 +91,8 @@ These can be set in your shell or a `.env` file.
 
 ## Testing
 No automated tests are included yet. `pytest` is in `requirements.txt` for future coverage. Use `python -m py_compile <file.py>` as a quick syntax check.
+
+---
+
+## iNaturalist spec
+See the detailed integration spec: [docs/inaturalist-spec.md](docs/inaturalist-spec.md).

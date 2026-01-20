@@ -23,7 +23,9 @@ License = Literal[
 	"CC-BY-ND",
 	"CC-BY-NC-SA",
 	"CC-BY-NC-ND",
+	"CC0",
 ]
+Licenses = list[License]
 IconicTaxonName = Literal[
 	"Plantae",
 	"Animalia",
@@ -94,7 +96,7 @@ class Observation(TypedDict):
 	user_login: str | None
 	place_guess: str | None
 	species_guess: str | None
-	license: License | None
+	license: Licenses | License | None
 	geoprivacy: str | None
 	coordinates_obscured: bool | None
 	iconic_taxon: NotRequired[IconicTaxon]
@@ -133,8 +135,8 @@ def get_observation(
 	per_page: int | None = None,
 	order_by: OrderBy | None = None,
 	order: Order | None = None,
-	license: License | None = None,
-	photo_license: License | None = None,
+	license: Licenses | License | None = None,
+	photo_license: Licenses | License | None = None,
 	taxon_id: int | None = None,
 	taxon_name: str | None = None,
 	iconic_taxa: Sequence[IconicTaxonName] | None = None,
@@ -203,7 +205,10 @@ def get_observation(
 	if order is not None:
 		params["order"] = order
 	if license is not None:
-		params["license"] = license
+		if isinstance(license, list):
+			params["license"] = ",".join(license)
+		else:
+			params["license"] = license
 	if photo_license is not None:
 		params["photo_license"] = photo_license
 	if taxon_id is not None:

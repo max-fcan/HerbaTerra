@@ -19,6 +19,7 @@ from app.services.inaturalist_api import (
 	Order,
 	OrderBy,
 	License,
+	Licenses,
 	IconicTaxonName,
 	HasFilter,
 	QualityGrade,
@@ -51,8 +52,8 @@ def scrape_observations_to_sqlite(
 	q: str | None = None,
 	order_by: OrderBy | None = None,
 	order: Order | None = None,
-	license: License | None = None,
-	photo_license: License | None = None,
+	license: Licenses | License | None = None,
+	photo_license: Licenses | License | None = None,
 	taxon_id: int | None = None,
 	taxon_name: str | None = None,
 	iconic_taxa: Sequence[IconicTaxonName] | None = None,
@@ -75,7 +76,7 @@ def scrape_observations_to_sqlite(
 	nelng: float | None = None,
 	list_id: int | None = None,
 	updated_since: str | None = None,
-	extra: Sequence[Extra] | None = None,
+	extra: Sequence[Extra] | None = ["identifications"],
 	session: requests.Session | None = None,
 	timeout: float = 15.0,
 ) -> ScrapeSummary:
@@ -178,14 +179,17 @@ __all__ = ["ScrapeSummary", "scrape_observations_to_sqlite"]
 
 if __name__ == "__main__":
     resp = scrape_observations_to_sqlite(
-        db_path="inat_test.db",
-        max_pages=5,
-        per_page=20,
+        db_path="temp/inat_test.db",
+        max_pages=10,
+        per_page=200,
         iconic_taxa=["Plantae"],
         order_by="date_added",
-        order="desc",
+        order="asc",
         has=["geo", "photos"],
         quality_grade="research",
         # only keep observations with commercially-usable licenses
         license=["CC-BY", "CC-BY-ND", "CC-BY-SA", "CC0"],
+        # request identifications to be included in response
+        extra=["identifications"],
+		timeout=60.0,
     )

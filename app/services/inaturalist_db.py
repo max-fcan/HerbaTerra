@@ -139,11 +139,30 @@ def init_db(db_path: str | Path) -> None:
 	LOGGER.info("Initialized database at %s", db_path)
 
 
-def _extract_geojson_coords(obs: Dict[str, Any]) -> tuple[float | None, float | None]:
+def _extract_coords(obs: Dict[str, Any]) -> tuple[float | None, float | None]:
+	"""Extract latitude and longitude from observation.
+	
+	Tries direct latitude/longitude fields first (may be strings),
+	then falls back to geojson.coordinates if available.
+	"""
+	# Try direct lat/lon fields first (API returns these as strings)
+	lat = obs.get("latitude")
+	lon = obs.get("longitude")
+	if lat is not None and lon is not None:
+		try:
+			return float(lat), float(lon)
+		except (ValueError, TypeError):
+			pass
+	
+	# Fallback to geojson if available
 	geo = obs.get("geojson") or {}
 	coords = geo.get("coordinates") or []
 	if len(coords) == 2:
-		return float(coords[1]), float(coords[0])
+		try:
+			return float(coords[1]), float(coords[0])
+		except (ValueError, TypeError):
+			pass
+	
 	return None, None
 
 
@@ -162,7 +181,7 @@ def _upsert_user(cursor: sqlite3.Cursor, user: Dict[str, Any] | None) -> int | N
 			json.dumps(user, ensure_ascii=False),
 		),
 	)
-	return int(user.get("id"))
+	return int(user.get("id")) # pyright: ignore[reportArgumentType]
 
 
 def _upsert_taxon(cursor: sqlite3.Cursor, taxon: Dict[str, Any] | None) -> int | None:
@@ -182,7 +201,27 @@ def _upsert_taxon(cursor: sqlite3.Cursor, taxon: Dict[str, Any] | None) -> int |
 			json.dumps(taxon, ensure_ascii=False),
 		),
 	)
-	return int(taxon.get("id"))
+	return int(taxon.get("id")) # pyright: ignore[reportArgumentType]
+
+
+def _extract_photo_url(photo: Dict[str, Any]) -> str:
+	"""Extract the best available photo URL, preferring original quality.
+	
+	The API provides square_url, thumb_url, small_url, medium_url, large_url.
+	We convert square_url to original by replacing '/square.' with '/original.'.
+	"""
+	square_url = photo.get("square_url")
+	if square_url:
+		# Convert square URL to original: .../square.jpg -> .../original.jpg
+		return square_url.replace("/square.", "/original.")
+	
+	# Fallback to best available size
+	for size in ["large_url", "medium_url", "small_url", "thumb_url"]:
+		url = photo.get(size)
+		if url:
+			return url
+	
+	return ""
 
 
 def _upsert_photo(cursor: sqlite3.Cursor, photo: Dict[str, Any]) -> int | None:
@@ -196,7 +235,7 @@ def _upsert_photo(cursor: sqlite3.Cursor, photo: Dict[str, Any]) -> int | None:
 		""",
 		(
 			photo_id,
-			str(photo.get("url", "")),
+			_extract_photo_url(photo),
 			photo.get("license_code"),
 			json.dumps(photo, ensure_ascii=False),
 		),
@@ -228,7 +267,7 @@ def _upsert_observation(cursor: sqlite3.Cursor, obs: Dict[str, Any]) -> None:
 	if obs_id is None:
 		raise ValueError("Observation missing id")
 
-	lat, lon = _extract_geojson_coords(obs)
+	lat, lon = _extract_coords(obs)
 	taxon_id = _upsert_taxon(cursor, obs.get("taxon"))
 	user_id = _upsert_user(cursor, obs.get("user"))
 
