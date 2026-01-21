@@ -259,8 +259,11 @@ __all__ = ["ScrapeSummary", "scrape_observations_to_sqlite"]
 
 
 if __name__ == "__main__":
+    
+    DB_PATH = "temp/inat_test.db"
+    
     resp = scrape_observations_to_sqlite(
-        db_path="temp/inat_test.db",
+        db_path=DB_PATH,
         start_page=50,
         max_pages=75, # Fetched pages 0-50 already
         per_page=200,
@@ -269,11 +272,11 @@ if __name__ == "__main__":
         order="asc",
         has=["geo", "photos"],
         quality_grade="research",
-        # only keep observations with commercially-usable licenses
+        ##### only keep observations with commercially-usable licenses
         license=["CC-BY", "CC-BY-ND", "CC-BY-SA", "CC0"],
-        # request identifications to be included in response
+        ##### request identifications to be included in response
         # extra=["identifications"],
 		timeout=60.0,
     )
     from app.services.inaturalist_db import enrich_observations_with_location_tags
-    enrich_observations_with_location_tags("temp/inat_test.db")
+    enrich_observations_with_location_tags(DB_PATH)

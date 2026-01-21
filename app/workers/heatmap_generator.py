@@ -100,8 +100,8 @@ def create_heatmap_cartopy(
 ) -> None:
     """Create a heatmap with proper map projection using cartopy."""
     try:
-        import cartopy.crs as ccrs
-        import cartopy.feature as cfeature
+        import cartopy.crs as ccrs # pyright: ignore[reportMissingImports]
+        import cartopy.feature as cfeature # pyright: ignore[reportMissingImports]
     except ImportError:
         print("cartopy not available, falling back to simple heatmap")
         create_heatmap_simple(lats, lons, output_path, bins, title)
@@ -111,11 +111,11 @@ def create_heatmap_cartopy(
     ax = plt.axes(projection=ccrs.Robinson())
     
     # Add map features
-    ax.add_feature(cfeature.LAND, facecolor='lightgray', edgecolor='none', alpha=0.3)
-    ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.2)
-    ax.add_feature(cfeature.COASTLINE, linewidth=0.5, edgecolor='gray')
-    ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='gray', alpha=0.5)
-    ax.set_global()
+    ax.add_feature(cfeature.LAND, facecolor='lightgray', edgecolor='none', alpha=0.3) # pyright: ignore[reportAttributeAccessIssue]
+    ax.add_feature(cfeature.OCEAN, facecolor='lightblue', alpha=0.2) # pyright: ignore[reportAttributeAccessIssue]
+    ax.add_feature(cfeature.COASTLINE, linewidth=0.5, edgecolor='gray') # pyright: ignore[reportAttributeAccessIssue]
+    ax.add_feature(cfeature.BORDERS, linewidth=0.3, edgecolor='gray', alpha=0.5) # pyright: ignore[reportAttributeAccessIssue]
+    ax.set_global() # pyright: ignore[reportAttributeAccessIssue]
     
     # Create 2D histogram data
     H, xedges, yedges = np.histogram2d(lons, lats, bins=bins, range=[[-180, 180], [-90, 90]])
@@ -127,7 +127,7 @@ def create_heatmap_cartopy(
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
     img = ax.imshow(
         H.T,
-        extent=extent,
+        extent=extent, # pyright: ignore[reportArgumentType]
         origin='lower',
         cmap='hot',
         alpha=0.7,

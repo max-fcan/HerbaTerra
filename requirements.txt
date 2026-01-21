@@ -1,7 +1,7 @@
 requests
 Flask
-pyinaturalist
 python-dotenv
 pytest
 reverse-geocoder
-sql30
+matplotlib
+numpy
