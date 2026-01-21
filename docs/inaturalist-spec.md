@@ -128,9 +128,9 @@ Indexes exist for common access patterns:
 **Normalization details**
 
 - **Coordinates**: `latitude`/`longitude` are parsed to float. If missing/invalid, falls back to `geojson.coordinates`.
-- **Users & taxa**: upserted first and referenced by `user_id` and `taxon_id` (nullable).
+- **Users & taxa**: upserted from embedded `user`/`taxon` objects and referenced by `user_id` and `taxon_id` (nullable). If the embedded objects are missing, the foreign keys remain `NULL` (no fallback to `user_id`/`taxon_id` scalar fields).
 - **Photos**: URL normalization prefers original size by converting `square_url` to `original` when possible, otherwise falls back to largest available size.
-- **Identifications**: each identification is upserted, with `is_current` derived from `current`. Useful for tracking community consensus, expert opinions, and observation quality evolution over time.
+- **Identifications**: each identification is upserted, with `is_current` derived from `current`. Identifications are only present when the API request includes `extra=identifications` (default in the scraper is currently set to request them). Useful for tracking community consensus, expert opinions, and observation quality evolution over time.
 - **Location tags**: reverse geocoded separately via `enrich_observations_with_location_tags()`, using the location tagging worker to add city/country/continent metadata.
 
 **Persistence flow**
@@ -162,6 +162,7 @@ Indexes exist for common access patterns:
 
 - Queries observations with coordinates but no location tags (when `skip_existing=True`).
 - Batch reverse geocodes using the `LocationTagger` from [app/workers/location_tags.py](../app/workers/location_tags.py).
+- Groups identical coordinates so reverse geocoding is done once per unique coordinate, then inserts tags for all observations at that coordinate.
 - Inserts results into the `location_tags` table, with one row per observation.
 - Processes in batches to handle large datasets efficiently.
 

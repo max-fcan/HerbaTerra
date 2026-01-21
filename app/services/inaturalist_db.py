@@ -326,8 +326,8 @@ def _upsert_observation(cursor: sqlite3.Cursor, obs: Dict[str, Any]) -> None:
 			obs.get("place_guess"),
 			obs.get("species_guess"),
 			obs.get("license"),
-			taxon_id or obs.get("taxon_id"),
-			user_id or obs.get("user_id"),
+			taxon_id,
+			user_id,
 		_compress_json(obs),
 	),
 )
@@ -485,32 +485,39 @@ def enrich_observations_with_location_tags(
 			return 0
 		
 		# Prepare coordinates for batch reverse geocoding
+		# Group observations by coordinates to handle duplicates
 		tagger = LocationTagger()
-		coords_map = {(row[1], row[2]): row[0] for row in rows}
-		coords_list = list(coords_map.keys())
+		coords_to_obs_ids = {}
+		for obs_id, lat, lon in rows:
+			coord = (lat, lon)
+			if coord not in coords_to_obs_ids:
+				coords_to_obs_ids[coord] = []
+			coords_to_obs_ids[coord].append(obs_id)
+		
+		coords_list = list(coords_to_obs_ids.keys())
 		
 		# Batch reverse geocode
 		tags_map = tagger.reverse_geocode_many(coords_list)
 		
-		# Insert location tags
+		# Insert location tags for all observations at each coordinate
 		for coord, tags in tags_map.items():
-			obs_id = coords_map[coord]
-			cursor.execute(
-				"""
-				INSERT OR REPLACE INTO location_tags (
-					observation_id, city, admin1, admin2, country, continent, error
-				) VALUES (?, ?, ?, ?, ?, ?, ?)
-				""",
-				(
-					obs_id,
-					tags.city,
-					tags.admin1,
-					tags.admin2,
-					tags.country,
-					tags.continent,
-					tags.error,
-				),
-			)
+			for obs_id in coords_to_obs_ids[coord]:
+				cursor.execute(
+					"""
+					INSERT OR REPLACE INTO location_tags (
+						observation_id, city, admin1, admin2, country, continent, error
+					) VALUES (?, ?, ?, ?, ?, ?, ?)
+					""",
+					(
+						obs_id,
+						tags.city,
+						tags.admin1,
+						tags.admin2,
+						tags.country,
+						tags.continent,
+						tags.error,
+					),
+				)
 		
 		conn.commit()
 		return len(rows)
