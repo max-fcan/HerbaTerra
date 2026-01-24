@@ -105,7 +105,8 @@ def fetch_images_in_bbox(
     return data.get("data", [])
 
 
-if __name__ == "__main__":
+def main():
+    """Test fetching images from Mapillary."""
     # Simple smoke test
     min_lon, min_lat = 2.30, 48.85
     max_lon, max_lat = 2.32, 48.86
@@ -124,3 +125,8 @@ if __name__ == "__main__":
         pprint(images)
     
     print("Got", len(images), "images")
+
+
+if __name__ == "__main__":
+    main()
+

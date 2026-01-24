@@ -1,4 +1,18 @@
-"""Reverse geocoding helpers with continent tagging and structured logging."""
+"""
+Reverse geocoding helpers with continent tagging and structured logging.
+
+To use, import the desired functions or classes from this module:
+    from app.services.location_tags import (
+        reverse_geocode,
+        reverse_geocode_many,
+        country_code_to_continent,
+        country_code_to_country_name,
+        LocationTagger,
+    )
+
+For testing, run this module directly:
+    python -m app.services.location_tags
+"""
 
 from __future__ import annotations
 
@@ -29,7 +43,7 @@ def _get_logger(name: str = __name__) -> logging.Logger:
     if not root_logger.handlers:
         try:
             return configure_logging(
-                name=name,
+                logger_name=name,
                 level=logging.INFO,
                 log_dir="logs",
                 log_filename="workers.log",
@@ -54,7 +68,7 @@ def _get_logger(name: str = __name__) -> logging.Logger:
 LOGGER = _get_logger()
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class LocationTags:
     """Container for normalized reverse geocode output."""
 
@@ -76,8 +90,12 @@ class LocationTags:
         }
 
 
-def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | Optional[int]:
-    """Validate and normalize a (lat, lon) tuple to floats within valid ranges."""
+def _normalize_coordinate(coord: Tuple[float, float]) -> Optional[Tuple[float, float]]:
+    """Validate and normalize a (lat, lon) tuple to floats within valid ranges.
+    
+    Returns:
+        Normalized (lat, lon) tuple if valid, None otherwise.
+    """
     try:
         lat = float(coord[0])
         lon = float(coord[1])
@@ -86,8 +104,8 @@ def _normalize_coordinate(coord: Tuple[float, float]) -> Tuple[float, float] | O
         return None
 
     if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
-        LOGGER.warning("Coordinate out of bounds (lat, lon): %s", coord)
-        return 1
+        LOGGER.warning("Coordinate out of bounds: %s", coord)
+        return None
 
     return (lat, lon)
 
@@ -103,11 +121,7 @@ def _load_country_code_mapping(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) ->
       - Continent_Name
     """
     # Validate CSV path
-    try:
-        csv_path = Path(csv_path)
-    except Exception as e:
-        LOGGER.error("Invalid path for country mapping CSV: %s", csv_path)
-        raise e
+    csv_path = Path(csv_path)
     
     if not csv_path.exists():
         LOGGER.error("Expected country mapping file at %s but it is missing", csv_path)
@@ -130,7 +144,7 @@ def _load_country_code_mapping(csv_path: Path | str = _COUNTRY_CONTINENT_CSV) ->
                     "Country code %s maps to multiple continents (%s, %s)",
                     code,
                     existing,
-                    continent,
+                    continent
                 )
             mapping[code] = {'country': country, 'continent': continent}
 
@@ -148,33 +162,35 @@ class LocationTagger:
     def __init__(self, country_continent_csv: Path | str = _COUNTRY_CONTINENT_CSV):
         self.country_continent_csv = Path(country_continent_csv)
         self._country_to_continent: Dict[str, Dict[str, str]] = _load_country_code_mapping(self.country_continent_csv)
-        self._logger = LOGGER
 
     def country_code_to_continent(self, country_code: str) -> Optional[str]:
         """Return a continent name for a two-letter country code."""
         code = (country_code or "").strip().upper()
-        if not code:
-            return None
-        return self._country_to_continent.get(code, {}).get("continent")
+        if code:
+            return self._country_to_continent.get(code, {}).get("continent")
+        return None
 
     def country_code_to_country_name(self, country_code: str) -> Optional[str]:
         """Return a country name for a two-letter country code."""
         code = (country_code or "").strip().upper()
-        if not code:
-            return None
-        return self._country_to_continent.get(code, {}).get("country")
+        if code:
+            return self._country_to_continent.get(code, {}).get("country")
+        return None
 
     def _build_tags(self, match: Mapping[str, str] | None) -> LocationTags:
         if not match:
             return LocationTags()
 
         country_code = (match.get("cc") or "").strip().upper()
+        # Single dictionary lookup for both continent and country
+        country_data = self._country_to_continent.get(country_code, {})
+        
         return LocationTags(
             city=match.get("name", ""),
             admin1=match.get("admin1", ""),
             admin2=match.get("admin2", ""),
-            continent=self.country_code_to_continent(country_code),
-            country=self.country_code_to_country_name(country_code),
+            continent=country_data.get("continent"),
+            country=country_data.get("country"),
         )
 
     def _search(self, coordinates: Sequence[Tuple[float, float]]) -> list[Mapping[str, str]]:
@@ -182,9 +198,9 @@ class LocationTagger:
             return []
 
         try:
-            return rg.search(list(coordinates))
+            return rg.search(coordinates)
         except Exception:
-            self._logger.exception(
+            LOGGER.exception(
                 "reverse_geocoder.search failed for %s coordinate(s)", len(coordinates)
             )
             return []
@@ -197,20 +213,18 @@ class LocationTagger:
         """
         # Normalize and validate input coordinates
         normalized = _normalize_coordinate((latitude, longitude))
-        if normalized == 1:
-            return LocationTags(error="OOB")
-        elif not normalized or isinstance(normalized, int):
+        if not normalized:
             return LocationTags(error="Invalid")
 
         # Perform reverse geocoding
         matches = self._search([normalized])
         if not matches:
-            self._logger.info("No reverse geocode result for %s", normalized)
+            LOGGER.info("No reverse geocode result for %s", normalized)
             return LocationTags(error="NotFound")
 
         # Build and return tags from the first (and only) result
         tags = self._build_tags(matches[0])
-        self._logger.debug("Reverse geocoded %s -> %s", normalized, tags)
+        LOGGER.debug("Reverse geocoded %s -> %s", normalized, tags)
         return tags
 
     def reverse_geocode_many(
@@ -226,10 +240,7 @@ class LocationTagger:
 
         for coord in coordinates:
             normalized = _normalize_coordinate(coord)
-            if normalized == 1:
-                output[coord] = LocationTags(error="OOB")
-                continue
-            elif not normalized or isinstance(normalized, int):
+            if not normalized:
                 output[coord] = LocationTags(error="Invalid")
                 continue
             normalized_coords.append((coord, normalized))
@@ -239,10 +250,10 @@ class LocationTagger:
 
         matches = self._search([coord for _, coord in normalized_coords])
         if len(matches) != len(normalized_coords):
-            self._logger.warning(
+            LOGGER.warning(
                 "reverse_geocoder returned %s result(s) for %s coordinate(s)",
                 len(matches),
-                len(normalized_coords),
+                len(normalized_coords)
             )
 
         for idx, (original, _) in enumerate(normalized_coords):
@@ -292,7 +303,8 @@ def reverse_geocode_many(
     return {coord: tag.as_dict() for coord, tag in tags.items()}
 
 
-if __name__ == "__main__":
+def main():
+    """Test reverse geocoding with sample points."""
     sample_points = [
         (48.8584, 2.2945),  # Paris
         (40.7128, -74.0060),  # New York
@@ -305,3 +317,8 @@ if __name__ == "__main__":
     for coord, info in tagger.reverse_geocode_many(sample_points).items():
         lat, lon = coord
         print(f"{lat:.4f},{lon:.4f} -> {info.as_dict()}")
+
+
+if __name__ == "__main__":
+    main()
+
