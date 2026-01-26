@@ -20,18 +20,10 @@ class Config:
     TESTING = False
     
     
-    # Databases
-    ## SQLite settings
-    APP_SQLITE_DB_PATH = Path("instance/app.db")
-    
-    
     # Third‑party API tokens
-    MAPILLARY_ACCESS_TOKEN = os.environ.get("MAPILLARY_ACCESS_TOKEN") or os.environ.get("MPY_ACCESS_TOKEN") or os.environ.get("MAPILLARY_TOKEN")
-    INAT_LICENSES = "CC0,CC-BY,CC-BY-SA" # List formatted for iNaturalist API requests
-    
+    MAPILLARY_ACCESS_TOKEN = os.environ.get("MAPILLARY_ACCESS_TOKEN") or os.environ.get("MPY_ACCESS_TOKEN") or os.environ.get("MAPILLARY_TOKEN")    
     
     # Logging settings
-    DEFAULT_LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
     DEFAULT_LOG_FORMAT = "%(asctime)s | %(levelname)-7s | %(parent_file)s:%(lineno)-3d | %(message)s"
     DEFAULT_LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
     
