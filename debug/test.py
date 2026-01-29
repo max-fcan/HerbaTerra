@@ -1,184 +1,100 @@
 import os
-import time
-import math
-import duckdb
 import requests
 import mercantile
-from datetime import datetime, timezone
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from mapbox_vector_tile import decode as mvt_decode
+from dotenv import load_dotenv
+from pprint import pprint
 
+load_dotenv()
 
 # -----------------------------
-# 1) Configuration
+# Configuration
 # -----------------------------
-MAPILLARY_TOKEN = os.getenv("MAPILLARY_ACCESS_TOKEN") or os.getenv("MAPILLARY_TOKEN")
-if not MAPILLARY_TOKEN:
-    raise RuntimeError("Missing MAPILLARY_ACCESS_TOKEN (or MAPILLARY_TOKEN) in environment variables.")
+TOKEN = os.getenv("MAPILLARY_ACCESS_TOKEN")
+if not TOKEN:
+    raise RuntimeError("MAPILLARY_ACCESS_TOKEN not set")
 
-DUCKDB_PATH = os.getenv("DUCKDB_PATH", r"c:\users\maxen\desktop\GITHUB_REPOSITORIES\HerbaTerra\data\gbif_plants.duckdb")
-
-# Mapillary vector tile endpoint pattern (z/x/y)
-TILE_URL = "https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token={token}"
-
-# Use z=14 as a practical coverage zoom
+# Pick a known urban coordinate with coverage
+LAT = 48.8584   # Eiffel Tower
+LON = 2.2945
 Z = 14
 
-# Politeness: keep requests slow enough to avoid hammering Mapillary
-REQUESTS_PER_SECOND = 5
-SLEEP_SECONDS = 1.0 / REQUESTS_PER_SECOND
+# -----------------------------
+# Convert lat/lon to tile
+# -----------------------------
+tile = mercantile.tile(LON, LAT, Z)
+z, x, y = tile.z, tile.x, tile.y
 
+print("Tile selected:")
+print(f"  z={z}, x={x}, y={y}")
+print()
 
 # -----------------------------
-# 2) DuckDB schema
+# Fetch vector tile
 # -----------------------------
-CREATE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS mapillary_tile_coverage (
-  z SMALLINT,
-  x INTEGER,
-  y INTEGER,
-  has_coverage BOOLEAN,
-  image_point_count INTEGER,
-  last_checked_at TIMESTAMP,
-  status VARCHAR,         -- 'ok' | 'error'
-  last_error VARCHAR,
-  PRIMARY KEY (z, x, y)
-);
-"""
-
-
-# -----------------------------
-# 3) Network fetching with retries
-# -----------------------------
-class TileFetchError(Exception):
-    pass
-
-
-@retry(
-    retry=retry_if_exception_type(TileFetchError),
-    stop=stop_after_attempt(4),
-    wait=wait_exponential(multiplier=0.5, min=0.5, max=8),
+url = (
+    f"https://tiles.mapillary.com/maps/vtp/mly1_public/2/"
+    f"{z}/{x}/{y}?access_token={TOKEN}"
 )
-def fetch_tile_bytes(z: int, x: int, y: int) -> bytes:
-    """
-    Downloads raw MVT bytes for one tile.
-    Retries on transient failures.
-    """
-    url = TILE_URL.format(z=z, x=x, y=y, token=MAPILLARY_TOKEN)
-    r = requests.get(url, timeout=20)
 
-    # Common failure modes:
-    # 403: token invalid / not passed as query param
-    # 429: rate limited
-    # 5xx: transient server issues
-    if r.status_code == 200:
-        return r.content
+print("Requesting URL:")
+print(url)
+print()
 
-    if r.status_code in (429, 500, 502, 503, 504):
-        raise TileFetchError(f"Transient HTTP {r.status_code}: {r.text[:200]}")
+response = requests.get(url, timeout=20)
+response.raise_for_status()
 
-    # Non-retryable errors
-    raise RuntimeError(f"Non-retryable HTTP {r.status_code}: {r.text[:200]}")
+print(f"Raw tile size: {len(response.content)} bytes")
+print()
 
+# -----------------------------
+# Decode vector tile
+# -----------------------------
+tile_data = mvt_decode(response.content)
 
-def count_image_points(mvt_bytes: bytes) -> int:
-    """
-    Decodes the vector tile and counts features in layer 'image'.
-    If layer doesn't exist, count is 0.
-    """
-    tile = mvt_decode(mvt_bytes)  # dict: {layer_name: {features: [...] ...}, ...}
-    layer = tile.get("image")
-    if not layer:
-        return 0
+print("Decoded tile keys (layers):")
+for layer_name in tile_data.keys():
+    print(f"  - {layer_name}")
+print()
+
+# -----------------------------
+# Detailed layer inspection
+# -----------------------------
+for layer_name, layer in tile_data.items():
     features = layer.get("features", [])
-    return len(features)
+    extent = layer.get("extent")
 
+    print("=" * 60)
+    print(f"LAYER: {layer_name}")
+    print(f"Feature count: {len(features)}")
+    print(f"Extent: {extent}")
+    print()
 
-# -----------------------------
-# 4) Tile selection from plant coords
-# -----------------------------
-def iter_tiles_from_duckdb(con: duckdb.DuckDBPyConnection, limit: int = 100):
-    """
-    Pull lat/lon from your plants table and yield unique (z,x,y) tiles.
+    if not features:
+        print("No features in this layer.")
+        continue
 
-    Adjust the SQL to match your real table/column names.
-    """
-    sql = """
-    SELECT lat, lon
-    FROM images
-    WHERE lat IS NOT NULL AND lon IS NOT NULL
-    LIMIT ?
-    """
-    rows = con.execute(sql, [limit]).fetchall()
+    # Geometry types summary
+    geom_types = {}
+    for f in features:
+        g = f.get("geometry", {})
+        gtype = g.get("type")
+        geom_types[gtype] = geom_types.get(gtype, 0) + 1
 
-    seen = set()
-    for lat, lon in rows:
-        t = mercantile.tile(lon, lat, Z)
-        key = (Z, t.x, t.y)
-        if key not in seen:
-            seen.add(key)
-            yield key
+    print("Geometry types:")
+    for gtype, count in geom_types.items():
+        print(f"  {gtype}: {count}")
+    print()
 
+    # Inspect first feature in detail
+    first = features[0]
+    print("First feature (example):")
+    print("Geometry:")
+    pprint(first.get("geometry"))
+    print()
+    print("Properties:")
+    pprint(first.get("properties"))
+    print()
 
-# -----------------------------
-# 5) Upsert results into DuckDB
-# -----------------------------
-UPSERT_SQL = """
-INSERT INTO mapillary_tile_coverage
-(z, x, y, has_coverage, image_point_count, last_checked_at, status, last_error)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT (z, x, y) DO UPDATE SET
-  has_coverage = excluded.has_coverage,
-  image_point_count = excluded.image_point_count,
-  last_checked_at = excluded.last_checked_at,
-  status = excluded.status,
-  last_error = excluded.last_error
-"""
-
-
-def main():
-    con = duckdb.connect(DUCKDB_PATH)
-    con.execute(CREATE_TABLE_SQL)
-
-    tiles = list(iter_tiles_from_duckdb(con, limit=20000))
-    print(f"Unique tiles to check: {len(tiles)}")
-
-    checked = 0
-    ok = 0
-    covered = 0
-
-    for z, x, y in tiles:
-        checked += 1
-        now = datetime.now(timezone.utc).replace(tzinfo=None)  # DuckDB TIMESTAMP friendly
-
-        try:
-            mvt_bytes = fetch_tile_bytes(z, x, y)
-            point_count = count_image_points(mvt_bytes)
-            has_cov = point_count > 0
-
-            con.execute(
-                UPSERT_SQL,
-                [z, x, y, has_cov, point_count, now, "ok", None]
-            )
-
-            ok += 1
-            if has_cov:
-                covered += 1
-
-        except Exception as e:
-            # Record the failure. This tile is "unknown" until later.
-            con.execute(
-                UPSERT_SQL,
-                [z, x, y, False, 0, now, "error", str(e)[:500]]
-            )
-
-        if checked % 200 == 0:
-            print(f"Checked {checked}/{len(tiles)} | ok={ok} | covered={covered}")
-
-        time.sleep(SLEEP_SECONDS)
-
-    print(f"Done. Checked={checked}, ok={ok}, covered={covered}")
-
-
-if __name__ == "__main__":
-    main()
+print("=" * 60)
+print("Inspection complete.")

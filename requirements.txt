@@ -5,3 +5,4 @@ pytest
 reverse-geocoder
 matplotlib
 numpy
+duckdb
