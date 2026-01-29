@@ -7,16 +7,16 @@ quiz_bp = Blueprint('quiz', __name__, url_prefix='/quiz')
 @quiz_bp.route('/')
 def index():
     """Quiz index page"""
-    return render_template('quiz/index.html')
+    return render_template('quiz/index_v2.html', completion_rate=25)
 
 
 @quiz_bp.route('/catalogue')
 def catalogue():
     """Quiz catalogue page"""
-    return render_template('quiz/catalogue.html')
+    return render_template('quiz/catalogue_v2.html')
 
 
 @quiz_bp.route('/play')
 def play():
     """Quiz play page"""
-    return render_template('quiz/play.html')
+    return render_template('quiz/play_v2.html')
