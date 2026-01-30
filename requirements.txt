@@ -1,8 +1,9 @@
 requests
 Flask
 python-dotenv
-pytest
 reverse-geocoder
-matplotlib
 numpy
+matplotlib
 duckdb
+tenacity
+mapbox_vector_tile

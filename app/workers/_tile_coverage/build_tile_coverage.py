@@ -23,7 +23,7 @@ class TileFetchError(Exception): pass
     stop=stop_after_attempt(4),
     wait=wait_exponential(multiplier=0.5, min=0.5, max=8),
 )
-def fetch(z, x, y):
+def _fetch(z, x, y):
     r = requests.get(URL.format(z=z, x=x, y=y, token=TOKEN), timeout=20)
     if r.status_code == 200:
         return r.content
@@ -40,36 +40,36 @@ def image_count(mvt_bytes: bytes) -> int:
 
 con = duckdb.connect(DB)
 
-# Only tiles present in your images table
+# Only tiles present in the images_with_tiles with no coverage info yet
 tiles = con.execute("""
     SELECT DISTINCT tile_x, tile_y
-    FROM images
-    WHERE tile_z = ? AND tile_x IS NOT NULL AND tile_y IS NOT NULL
+    FROM images_with_tiles
+    WHERE tile_z = ? AND tile_x IS NOT NULL AND tile_y IS NOT NULL AND has_coverage IS NULL
 """, [Z]).fetchall()
 
-print(f"tiles to check: {len(tiles)}")
+print(f"Tiles to check: {len(tiles)}")
 
 UPSERT = """
-INSERT INTO mapillary_tile_coverage
-(z, x, y, has_coverage, image_point_count, last_checked_at, status, last_error)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-ON CONFLICT (z, x, y) DO UPDATE SET
-  has_coverage = excluded.has_coverage,
-  image_point_count = excluded.image_point_count,
-  last_checked_at = excluded.last_checked_at,
-  status = excluded.status,
-  last_error = excluded.last_error
+UPDATE images
+SET has_coverage = ?
+WHERE image_id IN (
+    SELECT image_id
+    FROM images_with_tiles
+    WHERE tile_z = ?
+      AND tile_x = ?
+      AND tile_y = ?
+);
 """
 
 
 for i, (x, y) in enumerate(tiles, 1):
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     try:
-        b = fetch(Z, x, y)
+        b = _fetch(Z, x, y)
         cnt = image_count(b)
-        con.execute(UPSERT, [Z, x, y, cnt > 0, cnt, now, "ok", None])
+        con.execute(UPSERT, [cnt > 0, Z, x, y])
     except Exception as e:
-        con.execute(UPSERT, [Z, x, y, False, 0, now, "error", str(e)[:500]])
+        con.execute(UPSERT, [False, Z, x, y])
     if i % 200 == 0:
         print(f"{i}/{len(tiles)}")
     time.sleep(SLEEP)
