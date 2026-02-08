@@ -7,3 +7,4 @@ matplotlib
 duckdb
 tenacity
 mapbox_vector_tile
+aiohttp
