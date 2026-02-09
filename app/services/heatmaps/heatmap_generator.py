@@ -62,6 +62,7 @@ class HeatmapGenerator:
                     WHERE tile_z IS NOT NULL 
                         AND tile_x IS NOT NULL 
                         AND tile_y IS NOT NULL
+                        AND has_coverage = TRUE
                     GROUP BY tile_z, tile_x, tile_y
                     HAVING COUNT(*) >= ?
                     ORDER BY count DESC

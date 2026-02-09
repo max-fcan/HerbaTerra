@@ -79,6 +79,10 @@ class LocationTags:
     continent: Optional[str] = None
     error: Optional[str] = None
 
+    def location_as_str(self) -> str:
+        """Return a human-readable location string."""
+        return ", ".join([self.continent, self.country, self.admin1, self.admin2, self.city])
+
     def as_dict(self) -> Dict[str, Optional[str]]:
         return {
             "continent": self.continent,
@@ -282,18 +286,18 @@ def country_code_to_country_name(country_code: str) -> Optional[str]:
     """Return a country name for a two-letter country code."""
     return _default_tagger().country_code_to_country_name(country_code)
 
-def reverse_geocode(latitude: float, longitude: float) -> Dict[str, Optional[str]]:
+def reverse_geocode(latitude: float, longitude: float) -> LocationTags:
     """
     Reverse geocode a single coordinate pair (lat, lon).
 
     Returns a dict with country, city, admin1, admin2, and continent.
     """
-    return _default_tagger().reverse_geocode(latitude, longitude).as_dict()
+    return _default_tagger().reverse_geocode(latitude, longitude)
 
 
 def reverse_geocode_many(
     coordinates: list[Tuple[float, float]],
-) -> Dict[Tuple[float, float], Dict[str, Optional[str]]]:
+) -> Dict[Tuple[float, float], LocationTags]:
     """
     Reverse geocode multiple coordinate pairs (lat, lon).
 
