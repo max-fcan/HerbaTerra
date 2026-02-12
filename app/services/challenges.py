@@ -40,7 +40,7 @@ class Challenge:
         result: tuple[float, float, str, str, str, str, str] | None = self.conn.execute(query, [continent_upper, continent_upper, country, country, admin1, admin1, admin2, admin2, city, city]).fetchone()
         if not result:
             return None
-        return (result[0], {'coordinates': {'lat': result[1], 'lon': result[2]}, 'location': self._format_location(*result[3:8])})
+        return (result[0], {'coordinates': {'lat': result[1], 'lon': result[2]}, 'location': self._format_location(*result[3:8]), 'continent': result[3], 'details': self._format_location(*result[4:8])})
     
     def _format_location(self, *tags) -> str:
         def _camel_case(s: str) -> str:
@@ -72,7 +72,7 @@ class Challenge:
         if not results:
             return [solution]
         
-        proposed_locations = [({'coordinates': {'lat': r[0], 'lon': r[1]}, 'location': self._format_location(*r[2:7])}) for r in results]
+        proposed_locations = [({'coordinates': {'lat': r[0], 'lon': r[1]}, 'location': self._format_location(*r[2:7]), 'continent': r[2], 'details': self._format_location(*r[3:7])}) for r in results]
         proposed_locations.insert(randint(0, len(results)), solution)
         
         return proposed_locations

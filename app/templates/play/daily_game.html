@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Daily Challenge - HerbaTerra{% endblock %}
+
+{% block page_content %}
+<style>
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 60px);
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .image-container {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #2c3e50;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .challenge-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .options-container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        background-color: #f5f5f5;
+        box-sizing: border-box;
+    }
+
+    .option-card {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        color: #333;
+        font-weight: 500;
+    }
+
+    .option-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        border-color: #4CAF50;
+    }
+</style>
+
+<div class="game-container">
+    {% if challenge and challenge.url %}
+        <div class="image-container">
+            <img src="{{ challenge.url }}" alt="Plant to identify" class="challenge-image">
+        </div>
+        <div class="options-container">
+            {% for option in challenge.proposed_locations %}
+            <div class="option-card">
+                {{ option.location }}
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%; flex-direction: column;">
+            <h2>No challenge available right now.</h2>
+            <p>Please check back later.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
