@@ -1,5 +1,10 @@
 requests
 Flask
-Werkzeug
 python-dotenv
-pyinaturalist
+reverse-geocoder
+numpy
+matplotlib
+duckdb
+tenacity
+mapbox_vector_tile
+aiohttp

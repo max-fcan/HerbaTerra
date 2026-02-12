@@ -1,0 +1,2 @@
+# add the data/ directory to git-lfs
+data/** filter=lfs diff=lfs merge=lfs -text
