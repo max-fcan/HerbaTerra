@@ -1,80 +1,170 @@
 import duckdb
 from random import randint
+from threading import Lock
+
+_CONNECTION = duckdb.connect("data/gbif_plants.duckdb", read_only=True)
+_QUERY_LOCK = Lock()
+
 
 class Challenge:
-    def __init__(self, continent: str | None = None, country: str | None = None, admin1: str | None = None, admin2: str | None = None, city: str | None = None):
-        self.conn = self.connect_to_db()
-        
+    def __init__(
+        self,
+        continent: str | None = None,
+        country: str | None = None,
+        admin1: str | None = None,
+        admin2: str | None = None,
+        city: str | None = None,
+    ):
         result = self.get_plant_sample(continent, country, admin1, admin2, city)
         if result is None:
             self.url = None
             self.solution = None
             self.proposed_locations = None
-            self.conn.close()
             return
-        
+
         self.url, self.solution = result
         self.proposed_locations = self.get_proposed_locations(self.solution)
-        
-        self.conn.close()
 
-    def connect_to_db(self):
-        return duckdb.connect("data/gbif_plants.duckdb")
-    
-    def get_plant_sample(self, continent: str | None = None, country: str | None = None, admin1: str | None = None, admin2: str | None = None, city: str | None = None) -> tuple | None:
-        # Use duckdb to get challenge URL based on location filters
-        query = """
+    def to_dict(self) -> dict:
+        return {
+            "url": self.url,
+            "solution": self.solution,
+            "proposed_locations": self.proposed_locations,
+        }
+
+    def _fetchone(self, query: str, params: list | None = None):
+        with _QUERY_LOCK:
+            return _CONNECTION.execute(query, params or []).fetchone()
+
+    def _fetchall(self, query: str, params: list | None = None):
+        with _QUERY_LOCK:
+            return _CONNECTION.execute(query, params or []).fetchall()
+
+    def _build_filter_clause(
+        self,
+        continent: str | None = None,
+        country: str | None = None,
+        admin1: str | None = None,
+        admin2: str | None = None,
+        city: str | None = None,
+    ) -> tuple[str, list]:
+        conditions: list[str] = []
+        params: list[str] = []
+
+        if continent:
+            conditions.append("continent = ?")
+            params.append(continent.upper())
+        if country:
+            conditions.append("country = ?")
+            params.append(country)
+        if admin1:
+            conditions.append("admin1 = ?")
+            params.append(admin1)
+        if admin2:
+            conditions.append("admin2 = ?")
+            params.append(admin2)
+        if city:
+            conditions.append("city = ?")
+            params.append(city)
+
+        where_clause = " AND ".join(conditions) if conditions else "TRUE"
+        return where_clause, params
+
+    def get_plant_sample(
+        self,
+        continent: str | None = None,
+        country: str | None = None,
+        admin1: str | None = None,
+        admin2: str | None = None,
+        city: str | None = None,
+    ) -> tuple | None:
+        where_clause, params = self._build_filter_clause(continent, country, admin1, admin2, city)
+
+        total_rows_query = f"SELECT COUNT(*) FROM images WHERE {where_clause};"
+        if _result:=self._fetchone(total_rows_query, params):
+            total_rows = _result[0]
+        else:
+            total_rows = 0
+        if total_rows == 0:
+            return None
+
+        random_offset = randint(0, total_rows - 1)
+        sample_query = f"""
         SELECT image_url, lat, lon, continent, country, admin1, admin2, city
         FROM images
-        WHERE
-            (? IS NULL OR continent = ?) AND
-            (? IS NULL OR country = ?) AND          
-            (? IS NULL OR admin1 = ?) AND
-            (? IS NULL OR admin2 = ?) AND
-            (? IS NULL OR city = ?)
-        ORDER BY RANDOM()
-        LIMIT 1;
+        WHERE {where_clause}
+        LIMIT 1 OFFSET ?;
         """
-        # Execute query with provided filters and return a random image URL
-        continent_upper = continent.upper() if continent else None
-        result: tuple[float, float, str, str, str, str, str] | None = self.conn.execute(query, [continent_upper, continent_upper, country, country, admin1, admin1, admin2, admin2, city, city]).fetchone()
-        if not result:
+        row = self._fetchone(sample_query, [*params, random_offset])
+        if not row:
             return None
-        return (result[0], {'coordinates': {'lat': result[1], 'lon': result[2]}, 'location': self._format_location(*result[3:8]), 'continent': result[3], 'details': self._format_location(*result[4:8])})
-    
+
+        return (
+            row[0],
+            {
+                "coordinates": {"lat": row[1], "lon": row[2]},
+                "location": self._format_location(*row[3:8]),
+                "continent": row[3],
+                "details": self._format_location(*row[4:8]),
+            },
+        )
+
     def _format_location(self, *tags) -> str:
         def _camel_case(s: str) -> str:
-            return ' '.join(word.capitalize() for word in s.split(' '))
-        
+            return " ".join(word.capitalize() for word in s.split(" "))
+
         length = len(tags)
-        
+
         parts = [
-            tags[0] if length > 0 else '',  # continent
-            tags[1] if length > 1 else '',  # country
-            tags[2] if length > 2 else '',  # admin1
-            tags[3] if length > 3 else '',  # admin2
-            tags[4] if length > 4 else ''   # city
+            tags[0] if length > 0 else "",  # continent
+            tags[1] if length > 1 else "",  # country
+            tags[2] if length > 2 else "",  # admin1
+            tags[3] if length > 3 else "",  # admin2
+            tags[4] if length > 4 else "",  # city
         ]
-        return ', '.join([_camel_case(part) for part in parts if part])
-    
+        return ", ".join([_camel_case(part) for part in parts if part])
+
     def get_proposed_locations(self, solution: dict) -> list[dict]:
-        # Use duckdb to get proposed locations near the solution coordinates
-        query = """
+        base_query = """
         SELECT DISTINCT lat, lon, continent, country, admin1, admin2, city
         FROM images
-        WHERE CONTINENT IS NOT NULL AND COUNTRY IS NOT NULL
-        AND lat IS NOT NULL AND lon IS NOT NULL
+        WHERE continent IS NOT NULL
+          AND country IS NOT NULL
+          AND lat IS NOT NULL
+          AND lon IS NOT NULL
           AND NOT (lat = ? AND lon = ?)
-        ORDER BY RANDOM()
-        LIMIT 3;
         """
-        results: list[tuple[float, float, str, str, str, str, str]] | None = self.conn.execute(query, [solution['coordinates']['lat'], solution['coordinates']['lon']]).fetchall()
-        if not results:
+        base_params = [solution["coordinates"]["lat"], solution["coordinates"]["lon"]]
+
+        total_rows_query = f"SELECT COUNT(*) FROM ({base_query}) AS candidates;"
+        if _result:=self._fetchone(total_rows_query, base_params):
+            total_rows = _result[0]
+        else:
+            total_rows = 0
+        if total_rows == 0:
             return [solution]
         
-        proposed_locations = [({'coordinates': {'lat': r[0], 'lon': r[1]}, 'location': self._format_location(*r[2:7]), 'continent': r[2], 'details': self._format_location(*r[3:7])}) for r in results]
-        proposed_locations.insert(randint(0, len(results)), solution)
-        
+        row_count = min(3, total_rows)
+        max_offset = max(total_rows - row_count, 0)
+        random_offset = randint(0, max_offset)
+        choices_query = f"""
+        {base_query}
+        LIMIT ? OFFSET ?;
+        """
+        rows = self._fetchall(choices_query, [*base_params, row_count, random_offset])
+        if not rows:
+            return [solution]
+
+        proposed_locations = [
+            {
+                "coordinates": {"lat": row[0], "lon": row[1]},
+                "location": self._format_location(*row[2:7]),
+                "continent": row[2],
+                "details": self._format_location(*row[3:7]),
+            }
+            for row in rows
+        ]
+        proposed_locations.insert(randint(0, len(proposed_locations)), solution)
         return proposed_locations
 
 # if __name__ == "__main__":
