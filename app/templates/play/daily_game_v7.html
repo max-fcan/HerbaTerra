@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}Daily Challenge - HerbaTerra{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block page_content %}
+<style>
+    .return-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: bold;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.3);
+        transition: background-color 0.2s, transform 0.2s;
+        font-family: sans-serif;
+    }
+
+    .return-button:hover {
+        background-color: rgba(0, 0, 0, 0.7);
+        transform: scale(1.05);
+    }
+
+    .game-container {
+        display: flex;
+        flex-direction: row;
+        height: 100vh;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+        background-color: #000000;
+    }
+
+    .image-container {
+        flex: 3;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000000;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .challenge-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    }
+
+    .options-container {
+        flex: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 15px;
+        padding: 40px;
+        background-color: #000000;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    .option-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 15px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        color: #ffffff;
+        font-weight: 500;
+        max-width: 100%;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .option-card:hover:not(.answered) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(255,255,255,0.1);
+        border-color: #4CAF50;
+        background-color: #252525;
+    }
+
+    .option-card.correct {
+        background-color: #4CAF50 !important;
+        border-color: #4CAF50 !important;
+        animation: pulse 0.5s ease-in-out;
+    }
+
+    .option-card.wrong {
+        background-color: #f44336 !important;
+        border-color: #f44336 !important;
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    .option-card.answered {
+        cursor: default;
+    }
+
+    .continent-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #ffffff;
+        font-size: 1.1em;
+    }
+
+    .details-label {
+        font-size: 0.9em;
+        color: #cccccc;
+    }
+
+    .option-card.correct .details-label,
+    .option-card.wrong .details-label {
+        color: #ffffff;
+    }
+    
+    .next-button-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        height: 50px; /* Reserve space */
+    }
+    
+    .next-button {
+        background-color: white;
+        color: black;
+        border: none;
+        padding: 12px 40px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(255,255,255,0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: none; /* Hidden by default */
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+    }
+    
+    .next-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(255,255,255,0.3);
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
+    }
+    
+    @keyframes fadeIn {
+        to { opacity: 1; }
+    }
+</style>
+
+<div class="game-container">
+    <a href="{{ url_for('play.index') }}" class="return-button">← Return</a>
+
+    {% if challenge and challenge.url %}
+        <div class="image-container">
+            <img src="{{ challenge.url }}" alt="Plant to identify" class="challenge-image">
+        </div>
+        <div class="options-container">
+            <div id="options-list" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                {% for option in challenge.proposed_locations %}
+                <div class="option-card" 
+                     data-lat="{{ option.coordinates.lat }}" 
+                     data-lon="{{ option.coordinates.lon }}">
+                    <div class="continent-label">continent: {{ option.continent }}</div>
+                    {% if option.details %}
+                    <div class="details-label">{{ option.details }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="next-button-container">
+                <a href="{{ url_for('play.daily') }}" class="next-button" id="next-button">Next Challenge →</a>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const solutionLat = {{ challenge.solution.coordinates.lat }};
+                const solutionLon = {{ challenge.solution.coordinates.lon }};
+                const options = document.querySelectorAll('.option-card');
+                const nextButton = document.getElementById('next-button');
+                let answered = false;
+
+                options.forEach(card => {
+                    card.addEventListener('click', function() {
+                        if (answered) return;
+                        answered = true;
+
+                        // Mark all as answered to disable hover effects
+                        options.forEach(o => o.classList.add('answered'));
+
+                        const lat = parseFloat(this.getAttribute('data-lat'));
+                        const lon = parseFloat(this.getAttribute('data-lon'));
+
+                        if (lat === solutionLat && lon === solutionLon) {
+                            // Correct answer
+                            this.classList.add('correct');
+                        } else {
+                            // Wrong answer
+                            this.classList.add('wrong');
+                            
+                            // Highlight the correct answer
+                            options.forEach(c => {
+                                const cLat = parseFloat(c.getAttribute('data-lat'));
+                                const cLon = parseFloat(c.getAttribute('data-lon'));
+                                if (cLat === solutionLat && cLon === solutionLon) {
+                                    c.classList.add('correct');
+                                }
+                            });
+                        }
+                        
+                        // Show next button
+                        nextButton.style.display = 'block';
+                    });
+                });
+            });
+        </script>
+    {% else %}
+        <div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; flex-direction: column; color: white;">
+            <h2>No challenge available right now.</h2>
+            <p>Please check back later.</p>
+            <a href="{{ url_for('play.index') }}" class="btn" style="color: white; border: 1px solid white; padding: 10px 20px; border-radius: 20px; text-decoration: none; margin-top: 20px;">Go Back</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

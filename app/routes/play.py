@@ -2,6 +2,9 @@ from flask import Blueprint, render_template
 
 play_bp = Blueprint('play', __name__, url_prefix='/play')
 
+from app.services.challenges import Challenge
+
+
 
 @play_bp.route('')
 @play_bp.route('/')
@@ -13,7 +16,12 @@ def index():
 @play_bp.route('/daily')
 def daily():
     """Daily challenge page"""
-    return render_template('play/daily.html')
+    challenge = Challenge()
+
+    print(challenge.url)
+    print(challenge.solution)
+    print(challenge.proposed_locations)
+    return render_template('play/daily_game_v7.html', challenge=challenge)
 
 
 @play_bp.route('/game')
