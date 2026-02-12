@@ -113,7 +113,7 @@ def configure_app_logging(app: Flask) -> None:
     os.makedirs(log_dir, exist_ok=True)
 
     configure_logging(
-        name=app.name,
+        logger_name=app.name,
         level=level,
         log_format=log_format,
         datefmt=datefmt,
