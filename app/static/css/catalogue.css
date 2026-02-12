@@ -1,0 +1,768 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   catalogue.css — HerbaTerra species catalogue
+   Dark-theme, glassmorphism-style cards matching the main HerbaTerra palette.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+.catalogue-page {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Header / search / filters ───────────────────────────────────────────── */
+.catalogue-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.catalogue-title {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.03em;
+  color: #f5f7ff;
+}
+
+.catalogue-subtitle {
+  margin: -0.4rem 0 0;
+  font-size: 1rem;
+  color: #9ea6c8;
+}
+
+/* search bar */
+.search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.7rem 1rem 0.7rem 2.6rem;
+  font-size: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5f7ff;
+  backdrop-filter: blur(8px);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.search-input::placeholder {
+  color: #7a82a6;
+}
+
+.search-input:focus {
+  border-color: rgba(137, 180, 130, 0.5);
+  box-shadow: 0 0 0 3px rgba(137, 180, 130, 0.15);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.8rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #7a82a6;
+  pointer-events: none;
+}
+
+/* autocomplete */
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: rgba(12, 13, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 50;
+  display: none;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+.autocomplete-dropdown.show {
+  display: block;
+}
+
+.ac-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+  color: #e0e4f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ac-item:last-child {
+  border-bottom: none;
+}
+
+.ac-item:hover,
+.ac-item.ac-active {
+  background: rgba(137, 180, 130, 0.12);
+}
+
+.ac-label {
+  font-size: 0.95rem;
+}
+
+.ac-type {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a82a6;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+
+/* filter row */
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.88rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #dce1ff;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  max-width: 200px;
+}
+
+.filter-select:focus {
+  border-color: rgba(137, 180, 130, 0.5);
+}
+
+.filter-select option {
+  background: #0c0d1e;
+  color: #dce1ff;
+}
+
+.clear-filters-btn {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  background: rgba(200, 80, 80, 0.15);
+  border: 1px solid rgba(200, 80, 80, 0.3);
+  border-radius: 10px;
+  color: #f0a0a0;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background: rgba(200, 80, 80, 0.25);
+}
+
+/* ── Card grid ───────────────────────────────────────────────────────────── */
+.catalogue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.species-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 12, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  cursor: pointer;
+}
+
+.species-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
+  border-color: rgba(137, 180, 130, 0.3);
+}
+
+.card-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #0a0b18;
+}
+
+.card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.species-card:hover .card-image-wrap img {
+  transform: scale(1.06);
+}
+
+.card-count-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  color: #e0e4f0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-body {
+  padding: 0.9rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.card-species {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #c8dfc4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-taxonomy {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #8b92b3;
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+}
+
+.card-location,
+.card-date {
+  font-size: 0.8rem;
+  color: #7a82a6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* empty state */
+.catalogue-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #7a82a6;
+}
+
+.catalogue-empty a {
+  color: #c8dfc4;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+.catalogue-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.page-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #dce1ff;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.page-btn:hover {
+  background: rgba(137, 180, 130, 0.12);
+  border-color: rgba(137, 180, 130, 0.3);
+}
+
+.page-btn.active {
+  background: rgba(137, 180, 130, 0.2);
+  border-color: rgba(137, 180, 130, 0.45);
+  color: #c8dfc4;
+  font-weight: 700;
+}
+
+.page-ellipsis {
+  padding: 0 0.3rem;
+  color: #555a7a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIES DETAIL PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.species-detail-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+}
+
+.back-link {
+  display: inline-block;
+  font-size: 0.9rem;
+  color: #9ea6c8;
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: #c8dfc4;
+}
+
+/* primary info */
+.species-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.species-name {
+  margin: 0;
+  font-size: 2.2rem;
+  font-style: italic;
+  color: #c8dfc4;
+  letter-spacing: 0.02em;
+}
+
+.species-taxonomy-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tax-badge {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  letter-spacing: 0.03em;
+}
+
+.family-badge {
+  background: rgba(180, 130, 200, 0.15);
+  border: 1px solid rgba(180, 130, 200, 0.3);
+  color: #d4b4e8;
+}
+
+.genus-badge {
+  background: rgba(130, 180, 200, 0.15);
+  border: 1px solid rgba(130, 180, 200, 0.3);
+  color: #a8d4e8;
+}
+
+.rank-badge {
+  background: rgba(200, 180, 130, 0.15);
+  border: 1px solid rgba(200, 180, 130, 0.3);
+  color: #e8d4a8;
+}
+
+/* stats */
+.species-stats {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 110px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f5f7ff;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a82a6;
+}
+
+/* locations */
+.species-locations {
+  margin-bottom: 2rem;
+}
+
+.section-heading {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  color: #c8cde8;
+}
+
+.location-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.location-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  color: #bbc2dc;
+}
+
+.location-overflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.loc-count {
+  font-size: 0.72rem;
+  background: rgba(137, 180, 130, 0.15);
+  color: #a8d4a0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+}
+
+.more-chip {
+  cursor: pointer;
+  background: rgba(137, 180, 130, 0.1);
+  border-color: rgba(137, 180, 130, 0.2);
+  color: #a8d4a0;
+  transition: background 0.2s;
+}
+
+.more-chip:hover {
+  background: rgba(137, 180, 130, 0.2);
+}
+
+/* extra items */
+.species-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.extra-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.extra-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a82a6;
+}
+
+.extra-value {
+  font-size: 0.92rem;
+  color: #dce1ff;
+}
+
+.extra-link {
+  color: #a8d4a0;
+  text-decoration: none;
+}
+
+.extra-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Gallery slider (bottom half) ────────────────────────────────────────── */
+.species-gallery-panel {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.gallery-heading {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+  color: #c8cde8;
+}
+
+.gallery-count {
+  font-weight: 400;
+  color: #7a82a6;
+}
+
+.gallery-slider-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gallery-slider {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.5rem 0 1rem;
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(137, 180, 130, 0.3) transparent;
+}
+
+.gallery-slider::-webkit-scrollbar {
+  height: 6px;
+}
+
+.gallery-slider::-webkit-scrollbar-thumb {
+  background: rgba(137, 180, 130, 0.3);
+  border-radius: 4px;
+}
+
+.slider-card {
+  flex: 0 0 auto;
+  width: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(10, 12, 28, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.slider-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(137, 180, 130, 0.28);
+}
+
+.slider-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.slider-card-info {
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.76rem;
+  color: #8b92b3;
+}
+
+.slider-arrow {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(10, 12, 28, 0.8);
+  color: #dce1ff;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.slider-arrow:hover {
+  background: rgba(137, 180, 130, 0.15);
+  border-color: rgba(137, 180, 130, 0.3);
+}
+
+.slider-arrow-left {
+  margin-right: 0.5rem;
+}
+
+.slider-arrow-right {
+  margin-left: 0.5rem;
+}
+
+/* ── Lightbox ────────────────────────────────────────────────────────────── */
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-overlay.open {
+  display: flex;
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: #dce1ff;
+  font-size: 1.8rem;
+  cursor: pointer;
+  z-index: 101;
+  transition: color 0.2s;
+}
+
+.lightbox-close:hover {
+  color: #fff;
+}
+
+.lightbox-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  color: #dce1ff;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.lightbox-nav:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lightbox-prev {
+  left: 1.5rem;
+}
+
+.lightbox-next {
+  right: 1.5rem;
+}
+
+.lightbox-caption {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.88rem;
+  color: #9ea6c8;
+  text-align: center;
+  max-width: 80vw;
+  padding: 0.4rem 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .catalogue-page {
+    padding: 1rem;
+  }
+
+  .catalogue-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.9rem;
+  }
+
+  .species-detail-page {
+    padding: 0.75rem 1rem;
+  }
+
+  .species-name {
+    font-size: 1.6rem;
+  }
+
+  .species-stats {
+    gap: 0.5rem;
+  }
+
+  .stat-card {
+    min-width: 80px;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .slider-card {
+    width: 180px;
+  }
+
+  .filter-select {
+    max-width: 100%;
+    flex: 1 1 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .catalogue-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .species-stats {
+    flex-direction: column;
+  }
+
+  .stat-card {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}

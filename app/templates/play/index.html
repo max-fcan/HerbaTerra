@@ -67,6 +67,15 @@
     border-radius: 12px;
   }
 
+  #world-map {
+    width: 100%;
+    height: calc(56.25vh - 1rem);
+    max-height: calc(56.25vh - 1rem);
+    border-radius: 12px;
+    background: rgba(5, 6, 20, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
   .medals-list {
     display: flex;
     flex-direction: column;
@@ -193,7 +202,7 @@
   <div class="leaderboard-container">
     <div class="leaderboard-left-panel">
       <div class="atlas-instruction">Choose the continent you want to play:</div>
-      <img src="{{ url_for('static', filename='img/play_page/atlas.webp') }}" alt="Atlas" class="leaderboard-atlas" />
+      <div id="world-map"></div>
       <h2 class="leaderboard-title">DAILY LEADERBOARD</h2>
       <div class="medals-list">
         <div class="medal-item gold-medal">🥇</div>
@@ -205,7 +214,7 @@
       <h2 class="tournament-title">CATALOGUE</h2>
       <div class="tournament-image-wrapper">
         <img src="{{ url_for('static', filename='img/play_page/cata.webp') }}" alt="Tournament" class="tournament-image" />
-        <a href="/play/tournament" class="play-button">Explore</a>
+        <a href="{{ url_for('play.catalogue') }}" class="play-button">Explore</a>
       </div>
     </div>
     <div class="autumn-section">
@@ -220,4 +229,12 @@
 {% endblock %}
 
 {% block page_scripts %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Custom map script -->
+<script src="{{ url_for('static', filename='js/world-map.js') }}"></script>
 {% endblock %}

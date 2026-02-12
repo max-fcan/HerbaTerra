@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Catalogue - HerbaTerra{% endblock %}
+
+{% block page_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalogue.css') }}" />
+
+<div class="catalogue-page">
+
+  <!-- ── Search & Filters ─────────────────────────────────────────── -->
+  <header class="catalogue-header">
+    <h1 class="catalogue-title">Plant Catalogue</h1>
+    <p class="catalogue-subtitle">{{ catalogue.total_species }} species discovered</p>
+
+    <form class="catalogue-controls" id="catalogueForm" method="get" action="{{ url_for('play.catalogue') }}">
+      <!-- Search bar with autocomplete -->
+      <div class="search-wrapper">
+        <input
+          type="text"
+          name="q"
+          id="catalogueSearch"
+          class="search-input"
+          placeholder="Search species, family, location…"
+          value="{{ active_filters.q }}"
+          autocomplete="off"
+        />
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="filter-row">
+        <div class="filter-group">
+          <select name="family" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Families</option>
+            {% for f in filters.family_options %}
+            <option value="{{ f }}" {% if active_filters.family == f %}selected{% endif %}>{{ f }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <select name="genus" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Genera</option>
+            {% for g in filters.genus_options %}
+            <option value="{{ g }}" {% if active_filters.genus == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <select name="continent" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Continents</option>
+            {% for c in filters.continent_options %}
+            <option value="{{ c }}" {% if active_filters.continent == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <select name="country" class="filter-select" onchange="this.form.submit()">
+            <option value="">All Countries</option>
+            {% for c in filters.country_options %}
+            <option value="{{ c }}" {% if active_filters.country == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {% if active_filters.q or active_filters.family or active_filters.genus or active_filters.continent or active_filters.country %}
+        <a href="{{ url_for('play.catalogue') }}" class="clear-filters-btn">✕ Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </header>
+
+  <!-- ── Species Card Grid ────────────────────────────────────────── -->
+  <div class="catalogue-grid" id="catalogueGrid">
+    {% for item in catalogue.species_list %}
+    <a href="{{ url_for('play.species_detail', species_name=item.species) }}" class="species-card">
+      <div class="card-image-wrap">
+        <img
+          src="{{ item.image_url }}"
+          alt="{{ item.species }}"
+          loading="lazy"
+          onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22><rect fill=%22%23111%22 width=%22400%22 height=%22300%22/><text x=%22200%22 y=%22150%22 fill=%22%23555%22 text-anchor=%22middle%22 font-size=%2218%22>No image</text></svg>'"
+        />
+        <span class="card-count-badge">{{ item.observation_count }}</span>
+      </div>
+      <div class="card-body">
+        <h3 class="card-species">{{ item.species }}</h3>
+        <p class="card-taxonomy">{{ item.family }} · {{ item.genus }}</p>
+        <div class="card-meta">
+          <span class="card-location" title="{{ item.location }}">📍 {{ item.location }}</span>
+          <span class="card-date">📅 {{ item.date_display }}</span>
+        </div>
+      </div>
+    </a>
+    {% else %}
+    <div class="catalogue-empty">
+      <p>No species found matching your filters.</p>
+      <a href="{{ url_for('play.catalogue') }}">Reset filters</a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Pagination ───────────────────────────────────────────────── -->
+  {% if catalogue.total_pages > 1 %}
+  <nav class="catalogue-pagination">
+    {% if catalogue.page > 1 %}
+    <a href="{{ url_for('play.catalogue', page=catalogue.page - 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}" class="page-btn">← Prev</a>
+    {% endif %}
+
+    {% set start_page = [1, catalogue.page - 2] | max %}
+    {% set end_page = [catalogue.total_pages, catalogue.page + 2] | min %}
+
+    {% if start_page > 1 %}
+    <a href="{{ url_for('play.catalogue', page=1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}" class="page-btn">1</a>
+    {% if start_page > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+    {% endif %}
+
+    {% for p in range(start_page, end_page + 1) %}
+    <a href="{{ url_for('play.catalogue', page=p, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+       class="page-btn {% if p == catalogue.page %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+
+    {% if end_page < catalogue.total_pages %}
+    {% if end_page < catalogue.total_pages - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+    <a href="{{ url_for('play.catalogue', page=catalogue.total_pages, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}" class="page-btn">{{ catalogue.total_pages }}</a>
+    {% endif %}
+
+    {% if catalogue.page < catalogue.total_pages %}
+    <a href="{{ url_for('play.catalogue', page=catalogue.page + 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}" class="page-btn">Next →</a>
+    {% endif %}
+  </nav>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/catalogue.js') }}"></script>
+{% endblock %}
