@@ -36,7 +36,8 @@ class Challenge:
         LIMIT 1;
         """
         # Execute query with provided filters and return a random image URL
-        result: tuple[float, float, str, str, str, str, str] | None = self.conn.execute(query, [continent.upper(), continent.upper(), country, country, admin1, admin1, admin2, admin2, city, city]).fetchone()
+        continent_upper = continent.upper() if continent else None
+        result: tuple[float, float, str, str, str, str, str] | None = self.conn.execute(query, [continent_upper, continent_upper, country, country, admin1, admin1, admin2, admin2, city, city]).fetchone()
         if not result:
             return None
         return (result[0], {'coordinates': {'lat': result[1], 'lon': result[2]}, 'location': self._format_location(*result[3:8])})
@@ -76,14 +77,14 @@ class Challenge:
         
         return proposed_locations
 
-if __name__ == "__main__":
-    from pprint import pprint
-    challenge = Challenge(continent="Europe")
-    if challenge.url:
-        print("Challenge URL:", challenge.url)
-        print("Solution Details:")
-        pprint(challenge.solution)
-        print("Proposed Locations:")
-        pprint(challenge.proposed_locations)
-    else:
-        print("No challenge found for the specified location filters.")
+# if __name__ == "__main__":
+#     from pprint import pprint
+#     challenge = Challenge(continent="Europe")
+#     if challenge.url:
+#         print("Challenge URL:", challenge.url)
+#         print("Solution Details:")
+#         pprint(challenge.solution)
+#         print("Proposed Locations:")
+#         pprint(challenge.proposed_locations)
+#     else:
+#         print("No challenge found for the specified location filters.")
