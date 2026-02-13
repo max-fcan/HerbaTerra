@@ -100,5 +100,67 @@ def catalogue_autocomplete():
     from app.services.catalogue import autocomplete_search
 
     q = request.args.get('q', '', type=str)
+    results = autocomplete_search(q)
+    return jsonify(results)
+
+
+@play_bp.route('/catalogue/api/page')
+def catalogue_page_api():
+    """JSON API endpoint for infinite scroll pagination.
+    
+    Returns paginated catalogue data without HTML wrapper, 
+    optimized for AJAX loading.
+    """
+    from app.services.catalogue import get_species_catalogue
+
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('q', None, type=str)
+    family = request.args.get('family', None, type=str)
+    genus = request.args.get('genus', None, type=str)
+    continent = request.args.get('continent', None, type=str)
+    country_filter = request.args.get('country', None, type=str)
+
+    data = get_species_catalogue(
+        page=page,
+        per_page=24,
+        search=search,
+        family=family,
+        genus=genus,
+        continent=continent,
+        country=country_filter,
+    )
+    
+    # Return only data needed for AJAX, not full page
+    return jsonify({
+        'species_list': data['species_list'],
+        'page': data['page'],
+        'total_pages': data['total_pages'],
+    })
+
+
+@play_bp.route('/catalogue/api/filters')
+def catalogue_filters_api():
+    """JSON endpoint for dynamic filter options based on current filters.
+    
+    Returns available filter options that match the current search/filter criteria.
+    """
+    from app.services.catalogue import get_dynamic_filter_options
+
+    search = request.args.get('q', None, type=str)
+    family = request.args.get('family', None, type=str)
+    genus = request.args.get('genus', None, type=str)
+    continent = request.args.get('continent', None, type=str)
+    country_filter = request.args.get('country', None, type=str)
+
+    filters = get_dynamic_filter_options(
+        search=search,
+        family=family,
+        genus=genus,
+        continent=continent,
+        country=country_filter,
+    )
+    return jsonify(filters)
+
+    q = request.args.get('q', '', type=str)
     results = autocomplete_search(q, limit=12)
     return jsonify(results)
