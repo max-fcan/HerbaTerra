@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,76 +14,57 @@
     />
   </head>
   <body>
-    {% import "partials/gradient.html" as gradient %}
-    {% import "partials/earth.html" as earth %}
+    {% import "partials/gradient.html" as gradient %} {% import
+    "partials/earth.html" as earth %} {% set background_type =
+    background_type|default("none") %} {% set background_quality =
+    background_quality|default("medium") %} {% set bg_type =
+    background_type|trim %} {% set bg_quality = background_quality|trim %} {%
+    block background_wrapper %} {% set nav_block %} {% block nav %}
+    <nav class="site-nav">
+      <div class="nav-brand">
+        <a href="{{ url_for('main.index') }}">HerbaTerra</a>
+      </div>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('main.index') }}">Home</a></li>
+        <li><a href="{{ url_for('main.about') }}">About</a></li>
+        <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
+      </ul>
+    </nav>
+    {% endblock %} {% endset %} {% set page_content_block %} {% block
+    page_content %}
+    <main class="page-shell">{% block content %}{% endblock %}</main>
+    {% endblock %} {% endset %} {% set footer_block %} {% block footer %}
+    <footer class="site-footer"></footer>
+    {% endblock %} {% endset %} {% if bg_type == "earth" %} {% call
+    earth.earth_wrap() %} {{ nav_block }} {{ page_content_block }} {{
+    footer_block }} {% endcall %} {% elif bg_type == "gradient" %} {% call
+    gradient.gradient_wrap() %} {{ nav_block }} {{ page_content_block }} {{
+    footer_block }} {% endcall %} {% else %}
+    <div class="page-shell-wrap">
+      {{ nav_block }} {{ page_content_block }} {{ footer_block }}
+    </div>
+    {% endif %} {% endblock %} {% block scripts %}
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% if bg_type == "gradient" %}
+    <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
+    {% endif %} {% if bg_type == "earth" %}
+    <script type="module">
+      import { initializeEarthBackground } from "{{ url_for('static', filename='js/earth.js') }}";
+      initializeEarthBackground({{ bg_quality|tojson }});
+    </script>
+    {% endif %}
 
-    {% set background_type = background_type|default("none") %}
-    {% set background_quality = background_quality|default("medium") %}
-    {% set bg_type = background_type|trim %}
-    {% set bg_quality = background_quality|trim %}
+    <!-- Register Service Worker for offline support & caching -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register('{{ url_for("static", filename="js/sw.js") }}')
+          .catch(() => {
+            // Silently fail if SW registration is not supported or fails
+          });
+      }
+    </script>
 
-    {% block background_wrapper %}
-      {% set nav_block %}
-        {% block nav %}
-        <nav class="site-nav">
-          <div class="nav-brand">
-            <a href="{{ url_for('main.index') }}">HerbaTerra</a>
-          </div>
-          <ul class="nav-links">
-            <li><a href="{{ url_for('main.index') }}">Home</a></li>
-            <li><a href="{{ url_for('main.about') }}">About</a></li>
-            <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
-          </ul>
-        </nav>
-        {% endblock %}
-      {% endset %}
-
-      {% set page_content_block %}
-        {% block page_content %}
-        <main class="page-shell">{% block content %}{% endblock %}</main>
-        {% endblock %}
-      {% endset %}
-
-      {% set footer_block %}
-        {% block footer %}
-        <footer class="site-footer">
-        </footer>
-        {% endblock %}
-      {% endset %}
-
-      {% if bg_type == "earth" %}
-        {% call earth.earth_wrap() %}
-          {{ nav_block }}
-          {{ page_content_block }}
-          {{ footer_block }}
-        {% endcall %}
-      {% elif bg_type == "gradient" %}
-        {% call gradient.gradient_wrap() %}
-          {{ nav_block }}
-          {{ page_content_block }}
-          {{ footer_block }}
-        {% endcall %}
-      {% else %}
-        <div class="page-shell-wrap">
-          {{ nav_block }}
-          {{ page_content_block }}
-          {{ footer_block }}
-        </div>
-      {% endif %}
-    {% endblock %}
-
-    {% block scripts %}
-      <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-      {% if bg_type == "gradient" %}
-        <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
-      {% endif %}
-      {% if bg_type == "earth" %}
-        <script type="module">
-          import { initializeEarthBackground } from "{{ url_for('static', filename='js/earth.js') }}";
-          initializeEarthBackground({{ bg_quality|tojson }});
-        </script>
-      {% endif %}
-      {% block page_scripts %}{% endblock %}
-    {% endblock %}
+    {% block page_scripts %}{% endblock %} {% endblock %}
   </body>
 </html>

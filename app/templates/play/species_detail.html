@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ species.species }} - HerbaTerra{% endblock %}
+
+{% block page_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/catalogue.css') }}" />
+
+<div class="species-detail-page">
+
+  <!-- ── Top half: Species information ────────────────────────────── -->
+  <div class="species-info-panel">
+
+    <a href="{{ url_for('play.catalogue') }}" class="back-link">← Back to Catalogue</a>
+
+    <!-- Primary info -->
+    <div class="species-primary">
+      <h1 class="species-name">{{ species.species }}</h1>
+      <div class="species-taxonomy-bar">
+        <span class="tax-badge family-badge" title="Family">{{ species.family }}</span>
+        <span class="tax-badge genus-badge" title="Genus">{{ species.genus }}</span>
+        {% if species.taxon_rank %}
+        <span class="tax-badge rank-badge" title="Taxonomic rank">{{ species.taxon_rank }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="species-stats">
+      <div class="stat-card">
+        <span class="stat-value">{{ species.image_count }}</span>
+        <span class="stat-label">Photos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ species.observation_count }}</span>
+        <span class="stat-label">Observations</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ species.locations | length }}</span>
+        <span class="stat-label">Locations</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ species.earliest_date }}</span>
+        <span class="stat-label">First Seen</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ species.latest_date }}</span>
+        <span class="stat-label">Last Seen</span>
+      </div>
+    </div>
+
+    <!-- Locations section -->
+    <div class="species-locations">
+      <h2 class="section-heading">Observation Locations</h2>
+      <div class="location-list">
+        {% for loc, count in species.locations[:12] %}
+        <div class="location-chip">
+          <span class="loc-name">📍 {{ loc }}</span>
+          <span class="loc-count">{{ count }}</span>
+        </div>
+        {% endfor %}
+        {% if species.locations | length > 12 %}
+        <div class="location-chip more-chip" id="showMoreLocations" onclick="document.getElementById('hiddenLocations').style.display='flex'; this.style.display='none';">
+          +{{ species.locations | length - 12 }} more
+        </div>
+        <div class="location-overflow" id="hiddenLocations" style="display:none;">
+          {% for loc, count in species.locations[12:] %}
+          <div class="location-chip">
+            <span class="loc-name">📍 {{ loc }}</span>
+            <span class="loc-count">{{ count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Additional detail -->
+    <div class="species-extra">
+      <div class="extra-item">
+        <span class="extra-label">Predominant Region</span>
+        <span class="extra-value">{{ species.predominant_country }}, {{ species.predominant_continent }}</span>
+      </div>
+      {% if species.images[0].license %}
+      <div class="extra-item">
+        <span class="extra-label">License</span>
+        <span class="extra-value">{{ species.images[0].license | replace('http://creativecommons.org/licenses/', 'CC ') | replace('/', '') }}</span>
+      </div>
+      {% endif %}
+      {% if species.images[0].occurrence_url %}
+      <div class="extra-item">
+        <span class="extra-label">Source</span>
+        <a href="{{ species.images[0].occurrence_url }}" target="_blank" rel="noopener" class="extra-value extra-link">iNaturalist ↗</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Bottom half: Horizontal image slider ─────────────────────── -->
+  <div class="species-gallery-panel">
+    <h2 class="gallery-heading">Photos <span class="gallery-count">({{ species.image_count }})</span></h2>
+
+    <div class="gallery-slider-wrap">
+      <button class="slider-arrow slider-arrow-left" id="sliderLeft" aria-label="Scroll left">‹</button>
+
+      <div class="gallery-slider" id="gallerySlider">
+        {% for img in species.images %}
+        <div class="slider-card" data-index="{{ loop.index0 }}">
+          <img
+            src="{{ img.image_url }}"
+            alt="{{ species.species }} observation {{ loop.index }}"
+            loading="lazy"
+            onerror="this.parentElement.style.display='none'"
+          />
+          <div class="slider-card-info">
+            {% if img.city or img.country %}
+            <span>📍 {{ img.city }}{% if img.city and img.country %}, {% endif %}{{ img.country }}</span>
+            {% endif %}
+            {% if img.eventDate %}
+            <span>📅 {{ img.eventDate[:10] }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <button class="slider-arrow slider-arrow-right" id="sliderRight" aria-label="Scroll right">›</button>
+    </div>
+  </div>
+
+  <!-- ── Lightbox overlay ─────────────────────────────────────────── -->
+  <div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">✕</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Previous">‹</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Next">›</button>
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  // Pass images data for lightbox
+  window.__speciesImages = {{ species.images | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/catalogue.js') }}"></script>
+{% endblock %}
