@@ -5,15 +5,9 @@ plant-image database with location resolution, filtering, and pagination.
 
 from __future__ import annotations
 
-import duckdb
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-DB_PATH = "data/gbif_plants.duckdb"
-
-
-def _connect() -> duckdb.DuckDBPyConnection:
-    return duckdb.connect(DB_PATH, read_only=True)
+from app.services.db import connect
 
 
 def _convert_to_medium_image(image_url: str | None) -> str | None:
@@ -43,8 +37,7 @@ def get_species_catalogue(
       species, genus, family, image_url (cover), country (predominant),
       continent, observation_count, earliest/latest eventDate.
     """
-    conn = _connect()
-    try:
+    with connect() as conn:
         # Build WHERE clauses dynamically
         conditions: list[str] = ["species IS NOT NULL", "image_url IS NOT NULL"]
         params: list[Any] = []
@@ -180,8 +173,6 @@ def get_species_catalogue(
             "total_species": total_species,
             "total_pages": total_pages,
         }
-    finally:
-        conn.close()
 
 
 # ── Species detail ──────────────────────────────────────────────────────────
@@ -190,8 +181,7 @@ def get_species_detail(species_name: str) -> Dict[str, Any] | None:
     """
     Return full detail for a single species: all images, all locations, dates.
     """
-    conn = _connect()
-    try:
+    with connect() as conn:
         sql = """
         SELECT
             image_url, lat, lon, country, continent, admin1, admin2, city,
@@ -213,9 +203,12 @@ def get_species_detail(species_name: str) -> Dict[str, Any] | None:
         ]
         observations = [dict(zip(columns, r)) for r in rows]
         
-        # Convert all image URLs to medium size
+        # Convert all image URLs to medium size and compute location strings
         for obs in observations:
             obs["image_url"] = _convert_to_medium_image(obs.get("image_url"))
+            # Compute location string for each observation
+            parts = [p for p in [obs.get("city"), obs.get("admin2"), obs.get("admin1"), obs.get("country"), obs.get("continent")] if p]
+            obs["location_str"] = ", ".join(parts) if parts else "Unknown"
 
         # Aggregate info
         genus = observations[0]["genus"]
@@ -225,8 +218,7 @@ def get_species_detail(species_name: str) -> Dict[str, Any] | None:
         # Collect unique locations
         location_set: dict[str, int] = {}
         for obs in observations:
-            parts = [p for p in [obs.get("city"), obs.get("admin2"), obs.get("admin1"), obs.get("country"), obs.get("continent")] if p]
-            loc_str = ", ".join(parts) if parts else "Unknown"
+            loc_str = obs["location_str"]
             location_set[loc_str] = location_set.get(loc_str, 0) + 1
         # Sort by frequency descending
         locations_sorted = sorted(location_set.items(), key=lambda x: -x[1])
@@ -263,16 +255,13 @@ def get_species_detail(species_name: str) -> Dict[str, Any] | None:
             "earliest_date": earliest,
             "latest_date": latest,
         }
-    finally:
-        conn.close()
 
 
 # ── Autocomplete / filter options ───────────────────────────────────────────
 
 def get_filter_options() -> Dict[str, List[str]]:
     """Return distinct families, genera, continents, countries for filter dropdowns."""
-    conn = _connect()
-    try:
+    with connect() as conn:
         result: Dict[str, List[str]] = {}
         for col in ("family", "genus", "continent", "country"):
             rows = conn.execute(
@@ -280,8 +269,6 @@ def get_filter_options() -> Dict[str, List[str]]:
             ).fetchall()
             result[col + "_options"] = [r[0] for r in rows]
         return result
-    finally:
-        conn.close()
 
 
 def get_dynamic_filter_options(
@@ -296,8 +283,7 @@ def get_dynamic_filter_options(
     This ensures dropdowns only show options that would return results
     when combined with existing filters.
     """
-    conn = _connect()
-    try:
+    with connect() as conn:
         # Build WHERE clauses for already-selected filters
         conditions: list[str] = ["species IS NOT NULL", "image_url IS NOT NULL"]
         params: list[Any] = []
@@ -340,8 +326,6 @@ def get_dynamic_filter_options(
             result[col + "_options"] = [r[0] for r in rows]
 
         return result
-    finally:
-        conn.close()
 
 
 def autocomplete_search(query: str, limit: int = 10) -> List[Dict[str, str]]:
@@ -352,8 +336,7 @@ def autocomplete_search(query: str, limit: int = 10) -> List[Dict[str, str]]:
     if not query or len(query) < 2:
         return []
 
-    conn = _connect()
-    try:
+    with connect() as conn:
         query_lower = query.lower()
         like_pattern = f"%{query_lower}%"
         starts_with_pattern = f"{query_lower}%"
@@ -456,5 +439,3 @@ def autocomplete_search(query: str, limit: int = 10) -> List[Dict[str, str]]:
                 unique_suggestions.append(s)
         
         return unique_suggestions[:limit]
-    finally:
-        conn.close()

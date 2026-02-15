@@ -1,10 +1,11 @@
 """
-Image retrieval services.
+HerbaTerra service layer.
 
-Workflow:
-1. Pick random coordinates from the duckdb database, within specified location filters (e.g., country, admin1).
-2. Retrieve closest street level view using Mapillary API.
-3. Ensure there are enough plants in the vicinity using the database.
-4. Repeat until the desired number of images is collected.
+Modules:
+    db          – DuckDB connection management (connect / get_persistent)
+    catalogue   – Species catalogue queries (autocomplete, pagination, filters, detail)
+    challenge   – Random plant-image selection for the guessing game
+    mapillary   – Mapillary Graph API client with retry logic
+    geocoding   – Reverse geocoding and continent tagging
 """
 

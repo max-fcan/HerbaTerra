@@ -22,12 +22,14 @@
     block background_wrapper %} {% set nav_block %} {% block nav %}
     <nav class="site-nav">
       <div class="nav-brand">
-        <a href="{{ url_for('main.index') }}">HerbaTerra</a>
+        <a href="{{ url_for('landing.index') }}">
+          <img src="{{ url_for('static', filename='img/logos/main/full_logo_green.png') }}" alt="HerbaTerra" class="nav-logo">
+        </a>
       </div>
       <ul class="nav-links">
-        <li><a href="{{ url_for('main.index') }}">Home</a></li>
-        <li><a href="{{ url_for('main.about') }}">About</a></li>
-        <li><a href="{{ url_for('profile.index') }}">Profile</a></li>
+        <li><a href="{{ url_for('game.index') }}">Play</a></li>
+        <li><a href="{{ url_for('catalogue.index') }}">Catalogue</a></li>
+        <li><a href="{{ url_for('landing.about') }}">About</a></li>
       </ul>
     </nav>
     {% endblock %} {% endset %} {% set page_content_block %} {% block
@@ -44,7 +46,6 @@
       {{ nav_block }} {{ page_content_block }} {{ footer_block }}
     </div>
     {% endif %} {% endblock %} {% block scripts %}
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% if bg_type == "gradient" %}
     <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
     {% endif %} {% if bg_type == "earth" %}
@@ -54,16 +55,7 @@
     </script>
     {% endif %}
 
-    <!-- Register Service Worker for offline support & caching -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register('{{ url_for("static", filename="js/sw.js") }}')
-          .catch(() => {
-            // Silently fail if SW registration is not supported or fails
-          });
-      }
-    </script>
+    <script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
 
     {% block page_scripts %}{% endblock %} {% endblock %}
   </body>

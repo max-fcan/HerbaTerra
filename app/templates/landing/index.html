@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Home - HerbaTerra{% endblock %}
+{% set background_type = "earth" %}
+{% set background_quality = background_quality | default("medium") %}
+
+{% block content %}
+<section>
+  <h1>Welcome to HerbaTerra</h1>
+  <p>Travel the world, one plant at a time.</p>
+</section>
+<div class="play-button-container">
+  <a href="{{ url_for('game.index') }}" class="play-button">Get Started</a>
+</div>
+{% endblock %}

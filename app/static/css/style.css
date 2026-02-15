@@ -6,6 +6,7 @@ body {
   min-height: 100%;
   color: #f5f7ff;
   background-color: #03030a;
+  overflow-x: hidden;
 }
 
 *,
@@ -25,17 +26,26 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.5rem 1.5rem;
   background: rgba(5, 6, 20, 0.55);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-brand a {
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
   font-weight: 700;
   letter-spacing: 0.04em;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
+}
+
+.nav-logo {
+  height: clamp(30px, 2.1vw, 40px);
+  width: auto;
+  max-width: min(220px, 45vw);
+  display: block;
 }
 
 .nav-links {
@@ -53,7 +63,9 @@ a {
   border-radius: 10px;
   font-weight: 600;
   color: #e8ecff;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .nav-links a:hover,
@@ -63,12 +75,12 @@ a {
 }
 
 .page-shell {
-  max-width: 1100px;
+  max-width: min(1100px, 92vw);
   margin: 0 auto;
-  padding: 2rem;
+  padding: clamp(1rem, 2vw, 2rem);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(1rem, 1.5vw, 1.5rem);
 }
 
 section {
@@ -91,14 +103,18 @@ section {
   transition: all 0.3s ease;
   border: 2px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(15px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 .play-button:hover,
 .play-button:focus-visible {
   background: rgba(107, 68, 35, 0.35);
   transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(107, 68, 35, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 12px 24px rgba(107, 68, 35, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -106,7 +122,7 @@ section {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 40vh;
+  margin-top: clamp(20vh, 40vh, 40vh);
 }
 
 .gallery-play-button-container {
@@ -125,20 +141,20 @@ section {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
+  gap: clamp(0.5rem, 1vw, 1rem);
+  padding: clamp(0.5rem, 1vw, 1rem);
   background: rgba(107, 68, 35, 0.2);
   border-radius: 0 12px 12px 0;
   backdrop-filter: blur(8px);
   border: 2px solid rgba(255, 255, 255, 0.15);
   transition: all 0.3s ease;
-  width: 60px;
+  width: clamp(44px, 3.15vw, 60px);
   overflow: hidden;
-  min-height: 300px;
+  min-height: clamp(200px, 27.8vh, 300px);
 }
 
 .floating-nav:hover {
-  width: 180px;
+  width: clamp(130px, 9.45vw, 180px);
   background: rgba(107, 68, 35, 0.35);
 }
 
@@ -156,8 +172,8 @@ section {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  width: 50px;
-  height: 50px;
+  width: clamp(36px, 2.63vw, 50px);
+  height: clamp(36px, 2.63vw, 50px);
   background: transparent;
   color: #e8dccc;
   text-decoration: none;
@@ -219,11 +235,11 @@ p {
 
 .section-grid {
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(0.5rem, 1vw, 1rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 }
 
-.section-grid>div {
+.section-grid > div {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 12px;
@@ -231,9 +247,21 @@ p {
   height: 100%;
 }
 
+.page-shell-wrap,
+.page-content {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-shell-wrap > :not(.site-nav):not(.site-footer),
+.page-content > :not(.site-nav):not(.site-footer) {
+  flex: 1;
+}
+
 .site-footer {
   text-align: center;
-  padding: 1.5rem 0 2rem;
+  padding: 0;
   color: #cdd4ff;
 }
 
@@ -241,7 +269,8 @@ p {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #03030a;
 }
 
@@ -269,7 +298,57 @@ p {
   }
 
   .page-shell {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+
+  .floating-nav {
+    width: 40px;
+    min-height: auto;
+    padding: 0.4rem;
+    gap: 0.4rem;
+  }
+
+  .floating-nav:hover {
+    width: 120px;
+  }
+
+  .floating-nav-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .floating-nav-button::before {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-nav {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .nav-brand a {
+    font-size: 1rem;
+  }
+
+  .nav-logo {
+    height: clamp(24px, 6vw, 30px);
+    max-width: min(170px, 55vw);
+  }
+
+  .floating-nav {
+    display: none;
+  }
+
+  .photo-gallery {
+    min-height: 180px;
+  }
+
+  .gallery-prev,
+  .gallery-next {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 }
 
@@ -278,19 +357,19 @@ p {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
-  max-width: 800px;
+  gap: clamp(1rem, 2vw, 2rem);
+  max-width: min(800px, 90vw);
   width: 100%;
   height: auto;
-  margin: 2rem auto;
+  margin: clamp(1rem, 2vw, 2rem) auto;
 }
 
 .photo-gallery {
   position: relative;
   width: 100%;
-  min-height: 400px;
+  min-height: clamp(200px, 37vh, 400px);
   aspect-ratio: 4 / 3;
-  border-radius: 16px;
+  border-radius: clamp(10px, 0.84vw, 16px);
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
@@ -326,9 +405,9 @@ p {
   color: #e8dccc;
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  font-size: 1.5rem;
+  width: clamp(36px, 2.63vw, 50px);
+  height: clamp(36px, 2.63vw, 50px);
+  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(8px);
@@ -383,7 +462,7 @@ p {
 #world-map {
   width: 100%;
   height: 75vh;
-  min-height: 500px;
+  min-height: clamp(280px, 46.3vh, 500px);
   background: rgba(5, 6, 20, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.07);
   position: relative;

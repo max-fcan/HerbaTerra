@@ -1,0 +1,3 @@
+# Ignore HTML templates - Prettier breaks Jinja2 syntax
+app/templates/**/*.html
+*.html

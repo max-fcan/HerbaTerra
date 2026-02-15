@@ -1,0 +1,377 @@
+/* game.css — styles for the plant guessing game (game/play.html) */
+
+.return-button {
+  position: absolute;
+  top: clamp(12px, 1.05vw, 20px);
+  left: clamp(12px, 1.05vw, 20px);
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: clamp(6px, 0.52vw, 10px) clamp(12px, 1.05vw, 20px);
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: bold;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+  font-family: sans-serif;
+}
+
+.return-button:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+  transform: scale(1.05);
+}
+
+.game-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  background-color: #000000;
+}
+
+.image-container {
+  flex: 3;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000000;
+  padding: clamp(10px, 1.05vw, 20px);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.challenge-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 clamp(10px, 1.05vw, 20px) rgba(255, 255, 255, 0.1);
+  transition: opacity 0.2s ease;
+}
+
+.image-loading-overlay {
+  display: none;
+}
+
+.image-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.image-container.is-loading .image-loading-overlay {
+  opacity: 1;
+}
+
+.image-container.is-loading .challenge-image {
+  opacity: 0.35;
+}
+
+.spinner {
+  width: clamp(20px, 1.47vw, 28px);
+  height: clamp(20px, 1.47vw, 28px);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+}
+
+.options-container {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(8px, 0.79vw, 15px);
+  padding: clamp(15px, 2.1vw, 40px);
+  background-color: #000000;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.option-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: clamp(8px, 0.79vw, 15px);
+  font-size: clamp(0.9rem, 1.1vw, 1.1rem);
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s,
+    background-color 0.2s;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  font-weight: 500;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.option-card:hover:not(.answered) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 255, 255, 0.1);
+  border-color: #4caf50;
+  background-color: #252525;
+}
+
+.option-card.correct {
+  background-color: #4caf50 !important;
+  border-color: #4caf50 !important;
+  animation: pulse 0.5s ease-in-out;
+}
+
+.option-card.wrong {
+  background-color: #f44336 !important;
+  border-color: #f44336 !important;
+  animation: shake 0.5s ease-in-out;
+}
+
+.option-card.answered {
+  cursor: default;
+}
+
+.continent-label {
+  font-weight: bold;
+  margin-bottom: clamp(3px, 0.26vw, 5px);
+  color: #ffffff;
+  font-size: 1.1em;
+}
+
+.details-label {
+  font-size: 0.9em;
+  color: #cccccc;
+}
+
+.option-card.correct .details-label,
+.option-card.wrong .details-label {
+  color: #ffffff;
+}
+
+.next-button-container {
+  margin-top: clamp(10px, 1.05vw, 20px);
+  display: flex;
+  justify-content: center;
+  height: clamp(36px, 2.63vw, 50px);
+}
+
+.next-button {
+  background-color: white;
+  color: black;
+  border: none;
+  padding: clamp(8px, 0.63vw, 12px) clamp(20px, 2.1vw, 40px);
+  font-size: clamp(1rem, 1.2vw, 1.2rem);
+  font-weight: bold;
+  border-radius: 30px;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  display: none;
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+.next-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.3);
+}
+
+.next-button.is-loading {
+  opacity: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(6px, 0.52vw, 10px);
+  cursor: wait;
+}
+
+.next-button.is-loading::after {
+  content: "";
+  width: clamp(12px, 0.84vw, 16px);
+  height: clamp(12px, 0.84vw, 16px);
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  border-top-color: #000000;
+  animation: spin 0.7s linear infinite;
+}
+
+.species-info-card {
+  background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);
+  border: 1px solid #4caf50;
+  border-radius: 12px;
+  padding: clamp(12px, 1.05vw, 20px);
+  margin-bottom: clamp(12px, 1.05vw, 20px);
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+  display: none;
+  opacity: 0;
+  animation: slideDown 0.5s ease forwards;
+}
+
+.species-info-card.show {
+  display: block;
+}
+
+.species-info-card h3 {
+  color: #4caf50;
+  font-size: clamp(1rem, 1.3vw, 1.3rem);
+  margin: 0 0 0.5rem 0;
+  font-style: italic;
+}
+
+.species-info-card .taxonomy {
+  color: #cccccc;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.species-info-card .taxonomy span {
+  color: #888;
+}
+
+.species-info-card .view-detail-link {
+  display: inline-block;
+  background-color: #4caf50;
+  color: white;
+  padding: clamp(5px, 0.42vw, 8px) clamp(10px, 0.84vw, 16px);
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+  margin-top: 0.5rem;
+}
+
+.species-info-card .view-detail-link:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.image-attribution {
+  position: absolute;
+  bottom: clamp(6px, 0.52vw, 10px);
+  left: clamp(6px, 0.52vw, 10px);
+  background: rgba(0, 0, 0, 0.75);
+  color: #ffffff;
+  padding: clamp(4px, 0.31vw, 6px) clamp(8px, 0.63vw, 12px);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  max-width: calc(100% - clamp(20px, 2.1vw, 40px));
+  z-index: 5;
+  display: none;
+}
+
+.image-attribution.show {
+  display: block;
+}
+
+.image-attribution a {
+  color: #4caf50;
+  text-decoration: none;
+}
+
+.image-attribution a:hover {
+  text-decoration: underline;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive: stack on small screens */
+@media (max-width: 768px) {
+  .game-container {
+    flex-direction: column;
+  }
+
+  .image-container {
+    flex: none;
+    height: 45vh;
+    min-height: 200px;
+  }
+
+  .options-container {
+    flex: 1;
+    padding: clamp(10px, 3vw, 20px);
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+
+  .return-button {
+    top: clamp(8px, 2vw, 12px);
+    left: clamp(8px, 2vw, 12px);
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}

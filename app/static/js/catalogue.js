@@ -54,12 +54,23 @@
   const filterSelects = document.querySelectorAll(".filter-select");
   const searchInput = document.getElementById("catalogueSearch");
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+  const subtitleEl = document.getElementById("catalogueSubtitle");
+  const countEl = document.getElementById("catalogueCount");
+
+  const apiPageUrl = catalogueForm?.dataset.apiPageUrl || "/catalogue/api/page";
+  const apiFiltersUrl =
+    catalogueForm?.dataset.apiFiltersUrl || "/catalogue/api/filters";
+  const apiAutocompleteUrl =
+    catalogueForm?.dataset.apiAutocompleteUrl || "/catalogue/api/autocomplete";
+  const speciesBaseUrl =
+    catalogueForm?.dataset.speciesBaseUrl || "/catalogue/species/__SPECIES__";
 
   let filterDebounceTimer = null;
 
   function getCurrentFilters() {
     return {
       q: searchInput.value.trim(),
+      per_page: document.getElementById("perPageSelect")?.value || "24",
       family: document.getElementById("filterFamily")?.value || "",
       genus: document.getElementById("filterGenus")?.value || "",
       continent: document.getElementById("filterContinent")?.value || "",
@@ -77,14 +88,24 @@
 
   function updateURL(filters) {
     const query = buildQueryString(filters);
-    const newURL = query ? `/play/catalogue?${query}` : "/play/catalogue";
+    const newURL = query ? `/catalogue?${query}` : "/catalogue";
     window.history.replaceState({ filters }, "", newURL);
+  }
+
+  function updateSubtitleRange(endCount, totalSpecies) {
+    if (countEl) {
+      countEl.textContent = `1-${Math.max(0, endCount)}`;
+    }
+    if (subtitleEl && totalSpecies != null) {
+      subtitleEl.dataset.totalSpecies = String(totalSpecies);
+      subtitleEl.dataset.end = String(endCount);
+    }
   }
 
   async function fetchDynamicFilters(filters) {
     try {
       const query = buildQueryString(filters);
-      const response = await fetch(`/play/catalogue/api/filters?${query}`);
+      const response = await fetch(`${apiFiltersUrl}?${query}`);
       if (!response.ok) throw new Error("Failed to fetch filters");
 
       const data = await response.json();
@@ -135,7 +156,7 @@
     try {
       filters.q = filters.q || "";
       const query = buildQueryString({ ...filters, page });
-      const response = await fetch(`/play/catalogue/api/page?${query}`);
+      const response = await fetch(`${apiPageUrl}?${query}`);
 
       if (!response.ok) throw new Error("Failed to fetch catalogue");
 
@@ -149,13 +170,22 @@
         if (!data.species_list || !data.species_list.length) {
           grid.innerHTML =
             '<div class="catalogue-empty"><p>No species found matching your filters.</p></div>';
+          updateSubtitleRange(0, data.total_species || 0);
           return data;
         }
+
+        updateSubtitleRange(
+          data.species_list.length,
+          data.total_species || data.species_list.length,
+        );
 
         // Add species cards
         data.species_list.forEach((item) => {
           const card = document.createElement("a");
-          card.href = `/play/catalogue/species/${encodeURIComponent(item.species)}`;
+          card.href = speciesBaseUrl.replace(
+            "__SPECIES__",
+            encodeURIComponent(item.species),
+          );
           card.className = "species-card";
           card.innerHTML = `
             <div class="card-image-wrap">
@@ -226,21 +256,25 @@
     select.addEventListener("change", handleFilterChange);
   });
 
-  // Search input changes
-  searchInput.addEventListener("input", handleFilterChange);
-  searchInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      clearTimeout(filterDebounceTimer);
-      handleFilterChange();
-    }
-  });
+  // Search input changes (only on catalogue listing page)
+  if (searchInput) {
+    searchInput.addEventListener("input", handleFilterChange);
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        clearTimeout(filterDebounceTimer);
+        handleFilterChange();
+      }
+    });
+  }
 
   // Clear filters button
-  if (clearFiltersBtn) {
+  if (clearFiltersBtn && searchInput) {
     clearFiltersBtn.addEventListener("click", (e) => {
       e.preventDefault();
       searchInput.value = "";
+      const perPageSelect = document.getElementById("perPageSelect");
+      if (perPageSelect) perPageSelect.value = "24";
       document.getElementById("filterFamily").value = "";
       document.getElementById("filterGenus").value = "";
       document.getElementById("filterContinent").value = "";
@@ -248,6 +282,7 @@
 
       const filters = {
         q: "",
+        per_page: "24",
         family: "",
         genus: "",
         continent: "",
@@ -261,9 +296,11 @@
   }
 
   // Prevent form submission
-  catalogueForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-  });
+  if (catalogueForm) {
+    catalogueForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+  }
 
   // ── Autocomplete ────────────────────────────────────────────────────────
   const dropdown = document.getElementById("autocompleteDropdown");
@@ -318,7 +355,7 @@
   }
 
   function fetchSuggestions(query) {
-    fetch("/play/api/catalogue/autocomplete?q=" + encodeURIComponent(query))
+    fetch(`${apiAutocompleteUrl}?q=${encodeURIComponent(query)}`)
       .then((r) => r.json())
       .then((results) => {
         acIndex = -1;
@@ -413,116 +450,365 @@
     return el.innerHTML;
   }
 
-  // ── Gallery Slider (species detail page) ────────────────────────────────
-  const slider = document.getElementById("gallerySlider");
-  const leftBtn = document.getElementById("sliderLeft");
-  const rightBtn = document.getElementById("sliderRight");
+  // ── Enhanced Gallery System ─────────────────────────────────────────────
 
-  if (slider) {
-    const scrollAmount = 260;
+  // Initialize gallery when DOM is ready
+  function initGallery() {
+    // Gallery state (exposed globally for filtering integration)
+    window.galleryState = {
+      currentView: "carousel", // 'carousel' or 'grid'
+      currentLightboxIndex: 0,
+      images: window.__speciesImages || [],
+      allImages: window.__allImages || [],
+    };
 
-    if (leftBtn) {
-      leftBtn.addEventListener("click", () => {
+    const galleryState = window.galleryState;
+
+    // DOM elements
+    const viewToggle = document.getElementById("viewToggle");
+    const carouselView = document.getElementById("carouselView");
+    const gridView = document.getElementById("gridView");
+    const slider = document.getElementById("gallerySlider");
+    const leftBtn = document.getElementById("sliderLeft");
+    const rightBtn = document.getElementById("sliderRight");
+
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const lightboxCounter = document.getElementById("lightboxCounter");
+    const lightboxClose = document.getElementById("lightboxClose");
+    const lightboxPrev = document.getElementById("lightboxPrev");
+    const lightboxNext = document.getElementById("lightboxNext");
+    const lightboxThumbnails = document.getElementById("lightboxThumbnails");
+    const lightboxLoader = document.getElementById("lightboxLoader");
+
+    // ── View Toggle ──────────────────────────────────────────────────────────
+    function toggleView() {
+      if (!viewToggle || !carouselView || !gridView) return;
+
+      const iconGrid = viewToggle.querySelector(".icon-grid");
+      const iconCarousel = viewToggle.querySelector(".icon-carousel");
+
+      if (galleryState.currentView === "carousel") {
+        galleryState.currentView = "grid";
+        carouselView.classList.remove("active");
+        gridView.classList.add("active");
+        if (iconGrid) iconGrid.style.display = "none";
+        if (iconCarousel) iconCarousel.style.display = "block";
+      } else {
+        galleryState.currentView = "carousel";
+        carouselView.classList.add("active");
+        gridView.classList.remove("active");
+        if (iconGrid) iconGrid.style.display = "block";
+        if (iconCarousel) iconCarousel.style.display = "none";
+      }
+    }
+
+    if (viewToggle) {
+      viewToggle.addEventListener("click", toggleView);
+    }
+
+    // ── Carousel Navigation ──────────────────────────────────────────────────
+    if (slider && leftBtn && rightBtn) {
+      // Scale scroll amount proportionally (300px at 1905px viewport)
+      const scrollAmount = Math.max(200, Math.round(window.innerWidth * 0.157));
+
+      leftBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         slider.scrollBy({ left: -scrollAmount, behavior: "smooth" });
       });
-    }
-    if (rightBtn) {
-      rightBtn.addEventListener("click", () => {
+
+      rightBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         slider.scrollBy({ left: scrollAmount, behavior: "smooth" });
       });
+
+      // Drag scroll support
+      let isDragging = false;
+      let startX = 0;
+      let scrollLeft = 0;
+      let hasMoved = false;
+
+      slider.addEventListener("mousedown", (e) => {
+        const isCard = e.target.closest(".slider-card");
+        if (!isCard) return;
+
+        isDragging = true;
+        hasMoved = false;
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+        slider.style.cursor = "grabbing";
+        slider.style.userSelect = "none";
+      });
+
+      slider.addEventListener("mouseleave", () => {
+        isDragging = false;
+        slider.style.cursor = "";
+        slider.style.userSelect = "";
+      });
+
+      slider.addEventListener("mouseup", () => {
+        isDragging = false;
+        slider.style.cursor = "";
+        slider.style.userSelect = "";
+        setTimeout(() => {
+          hasMoved = false;
+        }, 10);
+      });
+
+      slider.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = x - startX;
+
+        if (Math.abs(walk) > 3) {
+          hasMoved = true;
+          slider.scrollLeft = scrollLeft - walk;
+        }
+      });
+
+      // Click to open lightbox
+      slider.addEventListener("click", (e) => {
+        if (hasMoved) return;
+
+        const card = e.target.closest(".slider-card");
+        if (!card) return;
+
+        const index = parseInt(card.getAttribute("data-index"), 10);
+        if (!isNaN(index)) {
+          openLightbox(index);
+        }
+      });
     }
 
-    // Touch / drag scroll support
-    let isDown = false;
-    let startX, scrollLeft;
+    // ── Grid View Click Handler ─────────────────────────────────────────────
+    if (gridView) {
+      gridView.addEventListener("click", (e) => {
+        const gridItem = e.target.closest(".grid-item");
+        if (!gridItem) return;
 
-    slider.addEventListener("mousedown", (e) => {
-      isDown = true;
-      slider.style.cursor = "grabbing";
-      startX = e.pageX - slider.offsetLeft;
-      scrollLeft = slider.scrollLeft;
-    });
-    slider.addEventListener("mouseleave", () => {
-      isDown = false;
-      slider.style.cursor = "";
-    });
-    slider.addEventListener("mouseup", () => {
-      isDown = false;
-      slider.style.cursor = "";
-    });
-    slider.addEventListener("mousemove", (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - slider.offsetLeft;
-      slider.scrollLeft = scrollLeft - (x - startX);
-    });
-  }
-
-  // ── Lightbox (species detail page) ──────────────────────────────────────
-  const lightbox = document.getElementById("lightbox");
-  const lightboxImg = document.getElementById("lightboxImg");
-  const lightboxCaption = document.getElementById("lightboxCaption");
-  const lightboxClose = document.getElementById("lightboxClose");
-  const lightboxPrev = document.getElementById("lightboxPrev");
-  const lightboxNext = document.getElementById("lightboxNext");
-
-  let currentLightboxIndex = 0;
-  const images = window.__speciesImages || [];
-
-  function openLightbox(index) {
-    if (!images.length || !lightbox) return;
-    currentLightboxIndex = index;
-    const img = images[index];
-    lightboxImg.src = img.image_url;
-    lightboxImg.alt = img.species || "";
-    const parts = [
-      img.city,
-      img.country,
-      img.eventDate ? img.eventDate.slice(0, 10) : "",
-    ].filter(Boolean);
-    lightboxCaption.textContent = parts.join(" · ");
-    lightbox.classList.add("open");
-    document.body.style.overflow = "hidden";
-  }
-
-  function closeLightbox() {
-    if (!lightbox) return;
-    lightbox.classList.remove("open");
-    document.body.style.overflow = "";
-  }
-
-  if (lightbox) {
-    // Open from slider card click
-    document.querySelectorAll(".slider-card").forEach((card) => {
-      card.addEventListener("click", function () {
-        openLightbox(parseInt(this.dataset.index, 10));
+        const index = parseInt(gridItem.getAttribute("data-index"), 10);
+        if (!isNaN(index)) {
+          openLightbox(index);
+        }
       });
-    });
+    }
 
-    lightboxClose.addEventListener("click", closeLightbox);
+    // ── Lightbox Functions ───────────────────────────────────────────────────
+    function openLightbox(index) {
+      const images = galleryState.images;
+      if (!images.length || !lightbox) return;
 
-    lightboxPrev.addEventListener("click", () => {
-      openLightbox((currentLightboxIndex - 1 + images.length) % images.length);
-    });
+      galleryState.currentLightboxIndex = index;
+      updateLightboxContent();
 
-    lightboxNext.addEventListener("click", () => {
-      openLightbox((currentLightboxIndex + 1) % images.length);
-    });
+      lightbox.classList.add("open");
+      document.body.style.overflow = "hidden";
 
-    lightbox.addEventListener("click", (e) => {
-      if (e.target === lightbox) closeLightbox();
-    });
+      // Generate thumbnails if not already done
+      if (lightboxThumbnails && lightboxThumbnails.children.length === 0) {
+        generateThumbnails();
+      }
+      updateActiveThumbnail();
+    }
 
-    document.addEventListener("keydown", (e) => {
-      if (!lightbox.classList.contains("open")) return;
-      if (e.key === "Escape") closeLightbox();
-      if (e.key === "ArrowLeft")
-        openLightbox(
-          (currentLightboxIndex - 1 + images.length) % images.length,
-        );
-      if (e.key === "ArrowRight")
-        openLightbox((currentLightboxIndex + 1) % images.length);
-    });
+    function closeLightbox() {
+      if (!lightbox) return;
+      lightbox.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    function updateLightboxContent() {
+      const images = galleryState.images;
+      const index = galleryState.currentLightboxIndex;
+      const img = images[index];
+
+      if (!img || !lightboxImg) return;
+
+      // Show loader
+      if (lightboxLoader) {
+        lightboxLoader.classList.add("loading");
+      }
+
+      // Update image
+      const tempImg = new Image();
+      tempImg.onload = () => {
+        lightboxImg.src = img.image_url;
+        lightboxImg.alt = img.species || "";
+        if (lightboxLoader) {
+          lightboxLoader.classList.remove("loading");
+        }
+      };
+      tempImg.onerror = () => {
+        if (lightboxLoader) {
+          lightboxLoader.classList.remove("loading");
+        }
+      };
+      tempImg.src = img.image_url;
+
+      // Update caption
+      if (lightboxCaption) {
+        const parts = [
+          img.location_str ||
+            [img.city, img.country].filter(Boolean).join(", "),
+          img.eventDate ? img.eventDate.slice(0, 10) : "",
+        ].filter(Boolean);
+        lightboxCaption.textContent = parts.join(" · ");
+      }
+
+      // Update counter
+      if (lightboxCounter) {
+        lightboxCounter.textContent = `${index + 1} / ${images.length}`;
+      }
+
+      updateActiveThumbnail();
+    }
+
+    function generateThumbnails() {
+      if (!lightboxThumbnails) return;
+
+      const images = galleryState.images;
+      lightboxThumbnails.innerHTML = "";
+
+      images.forEach((img, idx) => {
+        const thumb = document.createElement("div");
+        thumb.className = "thumbnail-item";
+        thumb.dataset.index = idx;
+
+        const thumbImg = document.createElement("img");
+        thumbImg.src = img.image_url;
+        thumbImg.alt = `Thumbnail ${idx + 1}`;
+        thumbImg.loading = "lazy";
+
+        thumb.appendChild(thumbImg);
+        thumb.addEventListener("click", () => {
+          galleryState.currentLightboxIndex = idx;
+          updateLightboxContent();
+        });
+
+        lightboxThumbnails.appendChild(thumb);
+      });
+    }
+
+    function updateActiveThumbnail() {
+      if (!lightboxThumbnails) return;
+
+      const thumbnails = lightboxThumbnails.querySelectorAll(".thumbnail-item");
+      thumbnails.forEach((thumb, idx) => {
+        if (idx === galleryState.currentLightboxIndex) {
+          thumb.classList.add("active");
+          thumb.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "center",
+          });
+        } else {
+          thumb.classList.remove("active");
+        }
+      });
+    }
+
+    function navigateLightbox(direction) {
+      const images = galleryState.images;
+      if (!images.length) return;
+
+      if (direction === "prev") {
+        galleryState.currentLightboxIndex =
+          (galleryState.currentLightboxIndex - 1 + images.length) %
+          images.length;
+      } else {
+        galleryState.currentLightboxIndex =
+          (galleryState.currentLightboxIndex + 1) % images.length;
+      }
+
+      updateLightboxContent();
+    }
+
+    // ── Lightbox Event Handlers ──────────────────────────────────────────────
+    if (lightbox) {
+      if (lightboxClose) {
+        lightboxClose.addEventListener("click", closeLightbox);
+      }
+
+      if (lightboxPrev) {
+        lightboxPrev.addEventListener("click", () => navigateLightbox("prev"));
+      }
+
+      if (lightboxNext) {
+        lightboxNext.addEventListener("click", () => navigateLightbox("next"));
+      }
+
+      // Close on background click
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) closeLightbox();
+      });
+
+      // Keyboard navigation
+      document.addEventListener("keydown", (e) => {
+        if (!lightbox.classList.contains("open")) return;
+
+        if (e.key === "Escape") {
+          closeLightbox();
+        } else if (e.key === "ArrowLeft") {
+          navigateLightbox("prev");
+        } else if (e.key === "ArrowRight") {
+          navigateLightbox("next");
+        }
+      });
+
+      // Touch swipe support for mobile
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      lightbox.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        },
+        { passive: true },
+      );
+
+      lightbox.addEventListener(
+        "touchend",
+        (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          handleSwipe();
+        },
+        { passive: true },
+      );
+
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0) {
+            navigateLightbox("next");
+          } else {
+            navigateLightbox("prev");
+          }
+        }
+      }
+    }
+
+    // ── Update gallery state when filtering ─────────────────────────────────
+    const originalUpdateSpeciesImages = window.updateSpeciesImages;
+    window.updateSpeciesImages = function (filteredImages) {
+      galleryState.images = filteredImages || galleryState.allImages;
+      if (originalUpdateSpeciesImages) {
+        originalUpdateSpeciesImages(filteredImages);
+      }
+    };
+  }
+
+  // Initialize gallery when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGallery);
+  } else {
+    initGallery();
   }
 })();
 
@@ -532,6 +818,11 @@
 
   const grid = document.getElementById("catalogueGrid");
   const paginationNav = document.querySelector(".catalogue-pagination");
+  const catalogueForm = document.getElementById("catalogueForm");
+
+  const apiPageUrl = catalogueForm?.dataset.apiPageUrl || "/catalogue/api/page";
+  const speciesBaseUrl =
+    catalogueForm?.dataset.speciesBaseUrl || "/catalogue/species/__SPECIES__";
 
   if (!grid || !paginationNav) return;
 
@@ -548,13 +839,26 @@
 
   // Get current filter parameters from URL
   const urlParams = new URLSearchParams(window.location.search);
+  const subtitleEl = document.getElementById("catalogueSubtitle");
+  const countEl = document.getElementById("catalogueCount");
   const filters = {
     q: urlParams.get("q") || "",
+    per_page: urlParams.get("per_page") || "24",
     family: urlParams.get("family") || "",
     genus: urlParams.get("genus") || "",
     continent: urlParams.get("continent") || "",
     country: urlParams.get("country") || "",
   };
+
+  let currentLoadedCount = parseInt(subtitleEl?.dataset.end || "0", 10);
+  const totalSpecies = parseInt(subtitleEl?.dataset.totalSpecies || "0", 10);
+
+  function updateInfiniteCount(addedCount) {
+    currentLoadedCount += addedCount;
+    if (countEl && totalSpecies > 0) {
+      countEl.textContent = `1-${Math.min(currentLoadedCount, totalSpecies)}`;
+    }
+  }
 
   // Hide pagination nav, enable infinite scroll instead
   paginationNav.style.display = "none";
@@ -589,7 +893,7 @@
     const nextPage = currentPage + 1;
     const query = buildQueryString(nextPage);
 
-    fetch(`/play/catalogue/api/page?${query}`)
+    fetch(`${apiPageUrl}?${query}`)
       .then((response) => {
         if (!response.ok) throw new Error("Network response failed");
         return response.json();
@@ -598,6 +902,7 @@
         if (!data.species_list || !data.species_list.length) {
           hasNextPage = false;
           loadingIndicator.style.display = "none";
+          isLoading = false;
           return;
         }
 
@@ -606,6 +911,8 @@
           const card = createSpeciesCard(item);
           grid.appendChild(card);
         });
+
+        updateInfiniteCount(data.species_list.length);
 
         // Re-initialize lazy loading for new images
         if (window.IntersectionObserver) {
@@ -636,6 +943,7 @@
         currentPage = nextPage;
         hasNextPage = nextPage < data.total_pages;
         loadingIndicator.style.display = "none";
+        isLoading = false;
       })
       .catch((error) => {
         console.error("Error loading next page:", error);
@@ -647,7 +955,10 @@
 
   function createSpeciesCard(item) {
     const card = document.createElement("a");
-    card.href = `/play/catalogue/species/${encodeURIComponent(item.species)}`;
+    card.href = speciesBaseUrl.replace(
+      "__SPECIES__",
+      encodeURIComponent(item.species),
+    );
     card.className = "species-card";
     card.innerHTML = `
       <div class="card-image-wrap">

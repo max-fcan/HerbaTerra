@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block title %}Catalogue - HerbaTerra{% endblock %}
+{% extends "base.html" %}
+{% block title %}Catalogue - HerbaTerra{% endblock %}
+
 {% block page_content %}
 <link
   rel="stylesheet"
@@ -9,11 +11,15 @@
   <!-- ── Search & Filters ─────────────────────────────────────────── -->
   <header class="catalogue-header">
     <h1 class="catalogue-title">Plant Catalogue</h1>
-    <p class="catalogue-subtitle">
+    <p class="catalogue-subtitle" id="catalogueSubtitle"
+       data-total-species="{{ catalogue.total_species }}"
+       data-start="{{ (catalogue.page - 1) * catalogue.per_page + 1 }}"
+       data-end="{{ [catalogue.page * catalogue.per_page, catalogue.total_species] | min }}"
+       data-per-page="{{ catalogue.per_page }}">
       {% set start_item = (catalogue.page - 1) * catalogue.per_page + 1 %}
       {% set end_item = [catalogue.page * catalogue.per_page, catalogue.total_species] | min %}
       {% if catalogue.total_species > 0 %}
-        Showing {{ start_item }}-{{ end_item }} of {{ catalogue.total_species }} species
+        Showing <span id="catalogueCount">{{ start_item }}-{{ end_item }}</span> of {{ catalogue.total_species }} species
       {% else %}
         No species found
       {% endif %}
@@ -23,7 +29,11 @@
       class="catalogue-controls"
       id="catalogueForm"
       method="get"
-      action="{{ url_for('play.catalogue') }}"
+      action="{{ url_for('catalogue.index') }}"
+      data-api-page-url="{{ url_for('catalogue.page_api') }}"
+      data-api-filters-url="{{ url_for('catalogue.filters_api') }}"
+      data-api-autocomplete-url="{{ url_for('catalogue.autocomplete_api') }}"
+      data-species-base-url="{{ url_for('catalogue.species_detail', species_name='__SPECIES__') }}"
     >
       <!-- Search bar with autocomplete -->
       <div class="search-wrapper">
@@ -51,6 +61,16 @@
 
       <!-- Filter pills -->
       <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label" for="perPageSelect">Results per page</label>
+          <select name="per_page" id="perPageSelect" class="filter-select" style="min-width: clamp(100px, 6vw, 120px);">
+            <option value="12" {% if catalogue.per_page == 12 %}selected{% endif %}>12</option>
+            <option value="24" {% if catalogue.per_page == 24 %}selected{% endif %}>24</option>
+            <option value="48" {% if catalogue.per_page == 48 %}selected{% endif %}>48</option>
+            <option value="96" {% if catalogue.per_page == 96 %}selected{% endif %}>96</option>
+          </select>
+        </div>
+
         <div class="filter-group">
           <label class="filter-label" for="filterFamily">Family</label>
           <select name="family" id="filterFamily" class="filter-select">
@@ -116,7 +136,7 @@
   <div class="catalogue-grid" id="catalogueGrid">
     {% for item in catalogue.species_list %}
     <a
-      href="{{ url_for('play.species_detail', species_name=item.species) }}"
+      href="{{ url_for('catalogue.species_detail', species_name=item.species) }}"
       class="species-card"
     >
       <div class="card-image-wrap">
@@ -136,9 +156,7 @@
         <h3 class="card-species">{{ item.species }}</h3>
         <p class="card-taxonomy">{{ item.family }} · {{ item.genus }}</p>
         <div class="card-meta">
-          <span class="card-location" title="{{ item.location }}"
-            >📍 {{ item.location }}</span
-          >
+          <span class="card-location" title="{{ item.location }}">📍 {{ item.location }}</span>
           <span class="card-date">📅 {{ item.date_display }}</span>
         </div>
       </div>
@@ -146,7 +164,7 @@
     {% else %}
     <div class="catalogue-empty">
       <p>No species found matching your filters.</p>
-      <a href="{{ url_for('play.catalogue') }}">Reset filters</a>
+      <a href="{{ url_for('catalogue.index') }}">Reset filters</a>
     </div>
     {% endfor %}
   </div>
@@ -159,35 +177,39 @@
   >
     {% if catalogue.page > 1 %}
     <a
-      href="{{ url_for('play.catalogue', page=catalogue.page - 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+      href="{{ url_for('catalogue.index', page=catalogue.page - 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
       class="page-btn"
       >← Prev</a
     >
-    {% endif %} {% set start_page = [1, catalogue.page - 2] | max %} {% set
-    end_page = [catalogue.total_pages, catalogue.page + 2] | min %} {% if
-    start_page > 1 %}
+    {% endif %}
+    {% set start_page = [1, catalogue.page - 2] | max %}
+    {% set end_page = [catalogue.total_pages, catalogue.page + 2] | min %}
+    {% if start_page > 1 %}
     <a
-      href="{{ url_for('play.catalogue', page=1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+      href="{{ url_for('catalogue.index', page=1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
       class="page-btn"
       >1</a
     >
-    {% if start_page > 2 %}<span class="page-ellipsis">…</span>{% endif %} {%
-    endif %} {% for p in range(start_page, end_page + 1) %}
+    {% if start_page > 2 %}<span class="page-ellipsis">…</span>{% endif %}
+    {% endif %}
+    {% for p in range(start_page, end_page + 1) %}
     <a
-      href="{{ url_for('play.catalogue', page=p, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+      href="{{ url_for('catalogue.index', page=p, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
       class="page-btn {% if p == catalogue.page %}active{% endif %}"
       >{{ p }}</a
     >
-    {% endfor %} {% if end_page < catalogue.total_pages %} {% if end_page <
-    catalogue.total_pages - 1 %}<span class="page-ellipsis">…</span>{% endif %}
+    {% endfor %}
+    {% if end_page < catalogue.total_pages %}
+    {% if end_page < catalogue.total_pages - 1 %}<span class="page-ellipsis">…</span>{% endif %}
     <a
-      href="{{ url_for('play.catalogue', page=catalogue.total_pages, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+      href="{{ url_for('catalogue.index', page=catalogue.total_pages, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
       class="page-btn"
       >{{ catalogue.total_pages }}</a
     >
-    {% endif %} {% if catalogue.page < catalogue.total_pages %}
+    {% endif %}
+    {% if catalogue.page < catalogue.total_pages %}
     <a
-      href="{{ url_for('play.catalogue', page=catalogue.page + 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
+      href="{{ url_for('catalogue.index', page=catalogue.page + 1, q=active_filters.q, family=active_filters.family, genus=active_filters.genus, continent=active_filters.continent, country=active_filters.country) }}"
       class="page-btn"
       >Next →</a
     >
@@ -195,6 +217,8 @@
   </nav>
   {% endif %}
 </div>
-{% endblock %} {% block page_scripts %}
-<script src="{{ url_for('static', filename='js/catalogue.js') }}"></script>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/catalogue.js', v='20260215a') }}"></script>
 {% endblock %}
