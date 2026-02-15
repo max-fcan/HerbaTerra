@@ -1,8 +1,7 @@
-"""Routes package - Blueprint imports and exports"""
-from app.routes.main import main_bp
-from app.routes.play import play_bp
-from app.routes.profile import profile_bp
-from app.routes.quiz import quiz_bp
-from app.routes.home import home_bp
+"""Routes package — Blueprint imports and exports."""
 
-__all__ = ['main_bp', 'play_bp', 'profile_bp', 'quiz_bp', 'home_bp']
+from app.routes.landing import landing_bp
+from app.routes.game import game_bp
+from app.routes.catalogue import catalogue_bp
+
+__all__ = ["landing_bp", "game_bp", "catalogue_bp"]

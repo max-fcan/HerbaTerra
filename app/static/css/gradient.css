@@ -48,7 +48,8 @@
   width: 100%;
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: linear-gradient(40deg, var(--color-bg1), var(--color-bg2));
   top: 0;
   left: 0;
@@ -102,7 +103,7 @@
   height: var(--circle-size);
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
-  transform-origin: calc(50% - 400px);
+  transform-origin: calc(50% - 21vw);
   animation: moveInCircle 20s reverse infinite;
   opacity: 1;
 }
@@ -117,9 +118,9 @@
   mix-blend-mode: var(--blending);
   width: var(--circle-size);
   height: var(--circle-size);
-  top: calc(50% - var(--circle-size) / 2 + 200px);
-  left: calc(50% - var(--circle-size) / 2 - 500px);
-  transform-origin: calc(50% + 400px);
+  top: calc(50% - var(--circle-size) / 2 + 10.5vw);
+  left: calc(50% - var(--circle-size) / 2 - 26.25vw);
+  transform-origin: calc(50% + 21vw);
   animation: moveInCircle 40s linear infinite;
   opacity: 1;
 }
@@ -136,7 +137,7 @@
   height: var(--circle-size);
   top: calc(50% - var(--circle-size) / 2);
   left: calc(50% - var(--circle-size) / 2);
-  transform-origin: calc(50% - 200px);
+  transform-origin: calc(50% - 10.5vw);
   animation: moveHorizontal 40s ease infinite;
   opacity: 0.7;
 }
@@ -153,7 +154,7 @@
   height: calc(var(--circle-size) * 2);
   top: calc(50% - var(--circle-size));
   left: calc(50% - var(--circle-size));
-  transform-origin: calc(50% - 800px) calc(50% + 200px);
+  transform-origin: calc(50% - 42vw) calc(50% + 10.5vw);
   animation: moveInCircle 20s ease infinite;
   opacity: 1;
 }

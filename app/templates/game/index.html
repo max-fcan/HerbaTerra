@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Play - HerbaTerra{% endblock %}
+
+{% block page_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}" />
+
+<div class="play-page-wrapper">
+  <div class="leaderboard-container">
+    <div class="leaderboard-left-panel">
+      <div class="atlas-instruction">Choose the continent you want to play:</div>
+      <div id="world-map"></div>
+    </div>
+    <div class="tournament-section">
+      <h2 class="tournament-title">CATALOGUE</h2>
+      <div class="tournament-image-wrapper">
+        <img src="{{ url_for('static', filename='img/play_page/cata.webp') }}" alt="Catalogue" class="tournament-image" />
+        <a href="{{ url_for('catalogue.index') }}" class="play-button">Explore</a>
+      </div>
+    </div>
+    <div class="autumn-section">
+      <h2 class="challenge-title">PLAY</h2>
+      <div class="autumn-image-wrapper">
+        <img src="{{ url_for('static', filename='img/play_page/autum.webp') }}" alt="Play" class="autumn-image" />
+        <a href="{{ url_for('game.play') }}" class="play-button">PLAY</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Custom map script -->
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}
