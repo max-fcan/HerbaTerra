@@ -1,0 +1,191 @@
+.hub-shell {
+  height: var(--page-height);
+  padding: var(--space-6);
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.36fr;
+  gap: var(--space-5);
+  height: 100%;
+}
+
+.hub-left-card {
+  width: 100%;
+  justify-self: center;
+  padding: var(--space-4);
+  border: var(--border-regular) solid rgba(196, 235, 192, 0.28);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(
+      120% 120% at 10% 0%,
+      rgba(173, 253, 179, 0.08) 0%,
+      transparent 62%
+    ),
+    linear-gradient(165deg, rgba(12, 24, 38, 0.42), rgba(12, 24, 38, 0.2));
+  -webkit-backdrop-filter: blur(0.45vh) saturate(122%);
+  backdrop-filter: blur(0.45vh) saturate(122%);
+  box-shadow: 0 1.1vh 2.6vh rgba(3, 10, 15, 0.35);
+}
+
+.hub-map {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: var(--border-regular) solid rgba(205, 240, 198, 0.22);
+  border-radius: var(--radius-sm);
+}
+
+.hub-map-error {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  margin: 0;
+  color: rgba(233, 245, 232, 0.82);
+  letter-spacing: 0.03vh;
+  text-align: center;
+}
+
+.hub-actions {
+  display: grid;
+  align-content: center;
+  gap: var(--space-3);
+}
+
+.leaflet-popup-content {
+  font-size: clamp(0.9rem, 1.7vh, 1rem);
+  line-height: 1.35;
+}
+
+.leaflet-popup-content .popup-country strong {
+  font-size: clamp(0.95rem, 1.8vh, 1.1rem);
+}
+
+.leaflet-popup-content .popup-country-code {
+  font-size: clamp(0.82rem, 1.45vh, 0.95rem);
+  line-height: 1.3;
+  opacity: 0.78;
+}
+
+.leaflet-popup-content .popup-buttons {
+  display: flex;
+  gap: clamp(0.55rem, 0.8vh, 0.75rem);
+  margin-top: clamp(0.5rem, 1vh, 0.7rem);
+}
+
+.leaflet-popup-content .popup-link {
+  padding: clamp(0.3rem, 0.5vh, 0.45rem) clamp(0.55rem, 1vh, 0.8rem);
+  border: var(--border-thin) solid var(--color-popup-link-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-popup-link-bg);
+  color: var(--color-popup-link-text);
+  font-size: clamp(0.82rem, 1.45vh, 0.95rem);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.leaflet-popup-content .popup-link:hover {
+  background: var(--color-popup-link-bg-hover);
+}
+
+.leaflet-popup-content .popup-split {
+  position: relative;
+  display: inline-flex;
+}
+
+.leaflet-popup-content .popup-link-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.leaflet-popup-content .popup-dropdown {
+  position: static;
+}
+
+.leaflet-popup-content .popup-dropdown > summary {
+  list-style: none;
+}
+
+.leaflet-popup-content .popup-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+.leaflet-popup-content .popup-link-caret {
+  min-width: 2rem;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 0;
+  cursor: pointer;
+  text-align: center;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.leaflet-popup-content .popup-caret-icon {
+  display: inline-block;
+  transition: transform 140ms ease;
+}
+
+.leaflet-popup-content .popup-dropdown[open] .popup-caret-icon {
+  transform: rotate(180deg);
+}
+
+.leaflet-popup-content .popup-dropdown-menu {
+  position: absolute;
+  top: calc(100% - 0.06rem);
+  left: 0;
+  z-index: 1000;
+  display: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: var(--border-thin) solid var(--color-popup-menu-border);
+  border-radius: 0.55rem;
+  background: var(--color-popup-menu-bg);
+  box-shadow: 0 0.14rem 0.32rem rgba(17, 47, 30, 0.1);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.leaflet-popup-content .popup-dropdown[open] .popup-dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.leaflet-popup-content .popup-link-option {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0.26rem 0.55rem;
+  border: 0;
+  border-bottom: var(--border-thin) solid rgba(77, 147, 95, 0.28);
+  border-radius: 0;
+  background: transparent;
+}
+
+.leaflet-popup-content .popup-dropdown-menu .popup-link-option:last-child {
+  border-bottom: 0;
+}
+
+.leaflet-popup-content .popup-link-disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+@media (max-aspect-ratio: 3/4) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .hub-left-card {
+    width: 100%;
+  }
+
+  .hub-actions {
+    align-content: end;
+  }
+}

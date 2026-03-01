@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Hub | HerbaTerra{% endblock %}
+{% block body_class %}hub-page{% endblock %}
+
+{% block head_extras %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/hub.css') }}"
+/>
+{% endblock %}
+
+{% block content %}
+<section class="hub-shell container-fluid">
+  <div class="hub-grid">
+    <aside class="hub-left-card">
+      <div id="hub-map" class="hub-map" aria-label="Interactive country map"></div>
+    </aside>
+
+    <aside class="hub-actions">
+      <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill" href="/catalogue"
+        >Explore</a
+      >
+      <a class="btn btn-theme btn-hub btn-hub-play rounded-pill" href="/play">Play</a>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<template id="hub-country-popup-template">
+  {% include "partials/hub_country_popup.html" %}
+</template>
+
+<script>
+  window.__hubMapBootstrap = {
+    geojsonUrl: {{ geojson_url | tojson }},
+    continentNamesByIsoCode: {{ continent_names_by_iso_code | tojson }},
+    continentCodesByName: {{ continent_codes_by_name | tojson }},
+    countryCodeA2ByIsoCode: {{ country_code_a2_by_iso_code | tojson }},
+    catalogueBaseUrl: {{ url_for("catalogue.catalogue") | tojson }},
+    playBaseUrl: {{ url_for("play.play_home") | tojson }}
+  };
+</script>
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/hub-map.js') }}"
+></script>
+{% endblock %}

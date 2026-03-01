@@ -1,62 +1,72 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}HerbaTerra{% endblock %}</title>
     <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
     />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/gradient.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}" />
+    {% block head_extras %}{% endblock %}
   </head>
-  <body>
-    {% import "partials/gradient.html" as gradient %} {% import
-    "partials/earth.html" as earth %} {% set background_type =
-    background_type|default("none") %} {% set background_quality =
-    background_quality|default("medium") %} {% set bg_type =
-    background_type|trim %} {% set bg_quality = background_quality|trim %} {%
-    block background_wrapper %} {% set nav_block %} {% block nav %}
-    <nav class="site-nav">
-      <div class="nav-brand">
-        <a href="{{ url_for('landing.index') }}">
-          <img src="{{ url_for('static', filename='img/logos/main/full_logo_green.png') }}" alt="HerbaTerra" class="nav-logo">
+  <body class="{% block body_class %}{% endblock %}">
+    <nav class="navbar navbar-expand-sm navbar-dark nav-glass fixed-top">
+      <div class="container-fluid nav-wrap">
+        <a class="navbar-brand brand-mark" href="/">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>HerbaTerra</span>
         </a>
+        <button
+          class="navbar-toggler border-0 p-1"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#topNav"
+          aria-controls="topNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="topNav">
+          <ul class="navbar-nav gap-sm-2">
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.path.startswith('/play') %}active{% endif %}"
+                href="/play"
+                >Play</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.path.startswith('/catalogue') %}active{% endif %}"
+                href="/catalogue"
+                >Catalogue</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if request.path == '/about' %}active{% endif %}"
+                href="/about"
+                >About</a
+              >
+            </li>
+          </ul>
+        </div>
       </div>
-      <ul class="nav-links">
-        <li><a href="{{ url_for('game.index') }}">Play</a></li>
-        <li><a href="{{ url_for('catalogue.index') }}">Catalogue</a></li>
-        <li><a href="{{ url_for('landing.about') }}">About</a></li>
-      </ul>
     </nav>
-    {% endblock %} {% endset %} {% set page_content_block %} {% block
-    page_content %}
+
     <main class="page-shell">{% block content %}{% endblock %}</main>
-    {% endblock %} {% endset %} {% set footer_block %} {% block footer %}
-    <footer class="site-footer"></footer>
-    {% endblock %} {% endset %} {% if bg_type == "earth" %} {% call
-    earth.earth_wrap() %} {{ nav_block }} {{ page_content_block }} {{
-    footer_block }} {% endcall %} {% elif bg_type == "gradient" %} {% call
-    gradient.gradient_wrap() %} {{ nav_block }} {{ page_content_block }} {{
-    footer_block }} {% endcall %} {% else %}
-    <div class="page-shell-wrap">
-      {{ nav_block }} {{ page_content_block }} {{ footer_block }}
-    </div>
-    {% endif %} {% endblock %} {% block scripts %}
-    {% if bg_type == "gradient" %}
-    <script src="{{ url_for('static', filename='js/gradient.js') }}"></script>
-    {% endif %} {% if bg_type == "earth" %}
-    <script type="module">
-      import { initializeEarthBackground } from "{{ url_for('static', filename='js/earth.js') }}";
-      initializeEarthBackground({{ bg_quality|tojson }});
-    </script>
-    {% endif %}
 
-    <script src="{{ url_for('static', filename='js/register-sw.js') }}"></script>
-
-    {% block page_scripts %}{% endblock %} {% endblock %}
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    ></script>
+    {% block scripts %}{% endblock %}
   </body>
 </html>

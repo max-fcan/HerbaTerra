@@ -1,42 +1,54 @@
-from flask import Flask
-from config.config import Config
-from app.log import init_logging
+from flask import Flask, jsonify, redirect, request, url_for
+
+from app.config import Config
+from .db.connections import get_replica_status, is_replica_ready
+from .logging_setup import setup_logging
+from .db import init_db
+from .routes import register_routes
 
 
-def create_app(config_class=Config):
-    """Application factory."""
+def _human_number(value):
+    """Jinja filter: 54260 → '54.3K', 1200000 → '1.2M', 830 → '830'."""
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return value
+    if n >= 1_000_000:
+        formatted = f"{n / 1_000_000:.1f}".rstrip("0").rstrip(".")
+        return f"{formatted}M"
+    if n >= 1_000:
+        formatted = f"{n / 1_000:.1f}".rstrip("0").rstrip(".")
+        return f"{formatted}K"
+    return str(n)
+
+
+def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Logging
-    init_logging(app)
+    setup_logging(
+        app.config.get("LOG_LEVEL", "INFO"),
+        str(app.config.get("LOG_FILE", "logs/app.log")),
+        app.config.get("WERKZEUG_LOG_LEVEL", "WARNING")
+    )
 
-    # Blueprints
-    from app.routes import landing_bp, game_bp, catalogue_bp
-    from app.api import api_bp
+    app.jinja_env.filters["human_number"] = _human_number # Implémenté par l'IA, pour formater les nombres de manière plus lisible dans les templates Jinja.
 
-    app.register_blueprint(landing_bp)
-    app.register_blueprint(game_bp)
-    app.register_blueprint(catalogue_bp)
-    app.register_blueprint(api_bp)
+    init_db(app)
+    register_routes(app)
 
-    # ── Caching headers for static assets ──────────────────────────────
-    @app.after_request
-    def add_cache_headers(response):
-        if response.content_type and (
-            "text/css" in response.content_type
-            or "application/javascript" in response.content_type
-            or "image/" in response.content_type
-            or "font/" in response.content_type
-        ):
-            response.cache_control.max_age = 2592000  # 30 days
-            response.cache_control.public = True
+    @app.before_request # Implémenté par l'IA, pour restreindre l'accès aux routes tant que la réplica n'est pas prête, pour éviter le risque de corruption de la base de données locale.
+    def gate_routes_until_replica_ready():
+        endpoint = request.endpoint or ""
+        if endpoint in {"static", "pages.index", "pages.start", "api.replica_status_api"}:
+            return None
 
-        if response.content_type and "text/html" in response.content_type:
-            response.cache_control.no_cache = True
-            response.cache_control.no_store = True
-            response.add_etag()
+        if is_replica_ready():
+            return None
 
-        return response
+        if endpoint.startswith("api."):
+            return jsonify(get_replica_status()), 503
+
+        return redirect(url_for("pages.start"))
 
     return app

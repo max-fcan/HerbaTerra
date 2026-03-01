@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Catalogue | HerbaTerra{% endblock %}
+{% block body_class %}catalogue-page{% endblock %}
+
+{% block head_extras %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/catalogue-list.css') }}"
+/>
+{% endblock %}
+
+{% block content %}
+<section class="catalogue-shell container-fluid">
+  <header class="catalogue-header">
+    <h1 class="catalogue-title">Plant Catalogue</h1>
+    <p class="catalogue-subtitle">
+      {% if catalogue.total_species > 0 %}
+      Showing
+      <strong>{{ ((catalogue.page - 1) * catalogue.per_page) + 1 }}</strong>
+      to
+      <strong>{{ [catalogue.page * catalogue.per_page, catalogue.total_species] | min }}</strong>
+      of
+      <strong>{{ catalogue.total_species }}</strong>
+      species
+      {% else %}
+      No species found
+      {% endif %}
+    </p>
+
+    <form
+      class="catalogue-filters"
+      method="get"
+      action="{{ url_for('catalogue.catalogue') }}"
+      data-default-sort="popular"
+      data-default-per-page="25"
+    >
+      <div class="catalogue-filter-grid">
+        <label class="catalogue-filter-group catalogue-filter-search">
+          <span class="catalogue-filter-label">Search</span>
+          <input
+            class="catalogue-input"
+            type="text"
+            name="q"
+            value="{{ active_filters.q }}"
+            placeholder="Species, family, genus, common name"
+          />
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Family</span>
+          <select class="catalogue-select" name="family">
+            <option value="">All families</option>
+            {% for option in filters.family_options %}
+            <option
+              value="{{ option.value }}"
+              {% if active_filters.family == option.value %}selected{% endif %}
+            >
+              {{ option.label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Genus</span>
+          <select class="catalogue-select" name="genus">
+            <option value="">All genera</option>
+            {% for option in filters.genus_options %}
+            <option
+              value="{{ option.value }}"
+              {% if active_filters.genus == option.value %}selected{% endif %}
+            >
+              {{ option.label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Continent</span>
+          <select class="catalogue-select" name="continent_code">
+            <option value="">All continents</option>
+            {% for option in filters.continent_options %}
+            <option
+              value="{{ option.value }}"
+              {% if active_filters.continent_code == option.value %}selected{% endif %}
+            >
+              {{ option.label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Country</span>
+          <select class="catalogue-select" name="country_code">
+            <option value="">All countries</option>
+            {% for option in filters.country_options %}
+            <option
+              value="{{ option.value }}"
+              {% if active_filters.country_code == option.value %}selected{% endif %}
+            >
+              {{ option.label }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Sort by</span>
+          <select class="catalogue-select" name="sort">
+            <option value="popular" {% if active_filters.sort == "popular" %}selected{% endif %}>
+              Most observations
+            </option>
+            <option value="media" {% if active_filters.sort == "media" %}selected{% endif %}>
+              Most images
+            </option>
+            <option value="alpha" {% if active_filters.sort == "alpha" %}selected{% endif %}>
+              Alphabetical
+            </option>
+          </select>
+        </label>
+
+        <label class="catalogue-filter-group">
+          <span class="catalogue-filter-label">Per page</span>
+          <select class="catalogue-select" name="per_page">
+            <option value="10" {% if active_filters.per_page == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if active_filters.per_page == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if active_filters.per_page == 50 %}selected{% endif %}>50</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="catalogue-filter-actions">
+        <button class="btn btn-theme catalogue-submit rounded-pill" type="submit">Apply</button>
+        <a class="catalogue-reset" href="{{ url_for('catalogue.catalogue') }}">Reset</a>
+      </div>
+    </form>
+  </header>
+
+  <section class="catalogue-grid">
+    {% for item in catalogue.species_list %}
+    <a href="{{ url_for('catalogue.catalogue_species', species_name=item.species) }}" class="catalogue-card">
+      <figure class="catalogue-card-media">
+        {% if item.image_url %}
+        <img
+          loading="lazy"
+          src="{{ item.image_url }}"
+          alt="{{ item.species }}"
+          onerror="
+            this.onerror = null;
+            const fallback = document.createElement('span');
+            fallback.className = 'catalogue-card-image-fallback';
+            fallback.textContent = 'No preview';
+            this.replaceWith(fallback);
+          "
+        />
+        {% else %}
+        <span class="catalogue-card-image-fallback">No preview</span>
+        {% endif %}
+      </figure>
+
+      <div class="catalogue-card-body">
+        {% if item.common_name_en %}
+        <h2 class="catalogue-card-common">{{ item.common_name_en }}</h2>
+        {% endif %}
+        <p class="catalogue-card-species"><em>{{ item.species }}</em></p>
+        <p class="catalogue-card-meta">
+          <span class="catalogue-card-location">{{ item.sample_country }}</span>
+          <span class="catalogue-card-separator">&middot;</span>
+          <span class="catalogue-card-obs">{{ item.occurrence_count | human_number }} obs.</span>
+        </p>
+      </div>
+    </a>
+    {% else %}
+    <article class="catalogue-empty">
+      <h2>No matching plants</h2>
+      <p>Try removing one or more filters to broaden results.</p>
+      <a href="{{ url_for('catalogue.catalogue') }}">Clear all filters</a>
+    </article>
+    {% endfor %}
+  </section>
+
+  {% if catalogue.total_pages > 1 %}
+  {% set q_param = active_filters.q or None %}
+  {% set family_param = active_filters.family or None %}
+  {% set genus_param = active_filters.genus or None %}
+  {% set country_code_param = active_filters.country_code or None %}
+  {% set continent_code_param = active_filters.continent_code or None %}
+  {% set sort_param = active_filters.sort or None %}
+
+  <nav class="catalogue-pagination" aria-label="Catalogue pagination">
+    {% if catalogue.page > 1 %}
+    <a
+      class="catalogue-page-link"
+      href="{{ url_for('catalogue.catalogue', page=catalogue.page - 1, per_page=active_filters.per_page, q=q_param, family=family_param, genus=genus_param, country_code=country_code_param, continent_code=continent_code_param, sort=sort_param) }}"
+    >
+      Previous
+    </a>
+    {% endif %}
+
+    {% set start_page = [1, catalogue.page - 2] | max %}
+    {% set end_page = [catalogue.total_pages, catalogue.page + 2] | min %}
+    {% for p in range(start_page, end_page + 1) %}
+    <a
+      class="catalogue-page-link {% if p == catalogue.page %}is-active{% endif %}"
+      href="{{ url_for('catalogue.catalogue', page=p, per_page=active_filters.per_page, q=q_param, family=family_param, genus=genus_param, country_code=country_code_param, continent_code=continent_code_param, sort=sort_param) }}"
+    >
+      {{ p }}
+    </a>
+    {% endfor %}
+
+    {% if catalogue.page < catalogue.total_pages %}
+    <a
+      class="catalogue-page-link"
+      href="{{ url_for('catalogue.catalogue', page=catalogue.page + 1, per_page=active_filters.per_page, q=q_param, family=family_param, genus=genus_param, country_code=country_code_param, continent_code=continent_code_param, sort=sort_param) }}"
+    >
+      Next
+    </a>
+    {% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/catalogue-filters.js') }}" defer></script>
+{% endblock %}
