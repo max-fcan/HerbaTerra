@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}HerbaTerra | Learn Plants by Place{% endblock %}
+{% block body_class %}landing-page{% endblock %}
+
+{% block head_extras %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/landing.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div
+  id="earth-canvas"
+  data-earth-texture-base="{{ url_for('static', filename='img/earth') }}"
+  aria-hidden="true"
+></div>
+
+<section class="landing-shell container-fluid">
+  <div class="hero-wrap">
+    <article class="title-card text-center">
+      <h1 class="hero-title">HerbaTerra</h1>
+      <p class="hero-subtitle">Travel the world, one plant at a time.</p>
+    </article>
+    <a class="btn btn-theme btn-start rounded-pill" href="{{ url_for('pages.start') }}">Start Playing</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script
+  type="module"
+  src="{{ url_for('static', filename='js/landing-background.js') }}"
+></script>
+{% endblock %}

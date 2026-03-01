@@ -1,10 +1,4 @@
-requests
-Flask
+flask
+libsql
+libsql-client
 python-dotenv
-reverse-geocoder
-numpy
-matplotlib
-duckdb
-tenacity
-mapbox_vector_tile
-aiohttp

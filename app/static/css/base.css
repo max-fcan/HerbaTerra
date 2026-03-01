@@ -1,0 +1,80 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100vh;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text-primary);
+  background: var(--color-surface-900);
+  font-family: var(--font-sans);
+}
+
+body.landing-page,
+body.subpage,
+body.hub-page,
+body.play-page {
+  overflow: hidden;
+}
+
+body.subpage,
+body.hub-page,
+body.play-page,
+body.catalogue-page,
+body.species-page {
+  background: linear-gradient(160deg, var(--color-subpage-a), var(--color-subpage-b));
+  background-attachment: fixed;
+}
+
+body.catalogue-page,
+body.species-page {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#earth-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.no-webgl #earth-canvas {
+  display: none;
+}
+
+.page-shell {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  padding-top: var(--nav-height);
+}
+
+body.catalogue-page .page-shell,
+body.species-page .page-shell {
+  min-height: 100vh;
+  height: auto;
+}
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+body.lightbox-open .nav-glass {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

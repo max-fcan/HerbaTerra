@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Play | HerbaTerra{% endblock %}
+{% block body_class %}play-page{% endblock %}
+
+{% block head_extras %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/play.css') }}"
+/>
+{% endblock %}
+
+{% block content %}
+<section class="play-shell" id="play-shell">
+  {% if play_error %}
+  <div class="play-error-card">
+    <p>{{ play_error }}</p>
+    <a class="btn btn-theme btn-hub btn-hub-play rounded-pill" href="{{ url_for('pages.hub') }}"
+      >Back To Hub</a
+    >
+  </div>
+  {% else %}
+  <aside class="play-floating-card play-scope-card">{{ scope_display }}</aside>
+
+  <aside class="play-floating-card play-time-card">
+    <strong id="play-timer-value">{{ (timer_seconds // 60) if (timer_seconds // 60) > 0 else 0 }}m {{ (timer_seconds % 60) }}s</strong>
+  </aside>
+
+  <section class="play-map-card" id="play-map-panel">
+    <div class="play-map-toolbar">
+      <button type="button" id="play-submit-btn" class="play-submit-map-btn" disabled>Submit</button>
+      <button
+        type="button"
+        id="play-map-expand-btn"
+        class="play-map-expand-btn"
+        aria-pressed="false"
+        aria-label="Expand map"
+      >
+        <svg
+          class="play-map-icon play-map-icon-expand"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 21h-5v-5" />
+        </svg>
+        <svg
+          class="play-map-icon play-map-icon-collapse"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M21 21h-6v-6" />
+        </svg>
+      </button>
+    </div>
+    <div id="play-map" class="play-map" aria-label="World map for making your guess"></div>
+  </section>
+
+  <article id="play-round-card" class="play-floating-card play-round-card is-hidden">
+    <div class="play-round-card-head">Round {{ current_round_index + 1 }} / {{ total_rounds }}</div>
+    <a
+      id="play-species-link"
+      class="play-species-link"
+      href="{{ url_for('catalogue.catalogue_species', species_name=round.species) }}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {{ round.vernacular_name or round.scientific_name or round.species }}
+    </a>
+    <p class="play-species-subtitle">{{ round.scientific_name or round.species }}</p>
+    <div class="play-score-row">
+      <span>Score</span>
+      <strong id="play-score-value">--</strong>
+    </div>
+    {% if has_next_round %}
+    <a id="play-next-round-link" class="play-round-action-link" href="{{ next_round_url }}"
+      >Next round</a
+    >
+    {% else %}
+    <a id="play-next-round-link" class="play-round-action-link" href="{{ restart_url }}"
+      >New game</a
+    >
+    {% endif %}
+  </article>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if not play_error %}
+<script>
+  window.__playBootstrap = {
+    backgroundImageUrl: {{ round.image_url | tojson }},
+    geojsonUrl: {{ geojson_url | tojson }},
+    submitGuessUrl: {{ submit_guess_url | tojson }},
+    scoreGuessUrl: {{ score_guess_url | tojson }},
+    nextRoundUrl: {{ next_round_url | tojson }},
+    restartUrl: {{ restart_url | tojson }},
+    hasNextRound: {{ has_next_round | tojson }},
+    continentNamesByIsoCode: {{ continent_names_by_iso_code | tojson }},
+    timerSeconds: {{ timer_seconds | tojson }},
+    totalRounds: {{ total_rounds | tojson }},
+    currentRoundIndex: {{ current_round_index | tojson }},
+    scope: {{ scope | tojson }},
+    solution: {
+      latitude: {{ round.latitude | tojson }},
+      longitude: {{ round.longitude | tojson }},
+      country: {{ round.country | tojson }},
+      continent: {{ round.continent | tojson }}
+    }
+  };
+</script>
+<script type="module" src="{{ url_for('static', filename='js/play-map.js') }}"></script>
+{% endif %}
+{% endblock %}
