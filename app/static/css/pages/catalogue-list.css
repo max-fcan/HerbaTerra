@@ -26,6 +26,33 @@
   opacity: 0.88;
 }
 
+.catalogue-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 2.2rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgba(205, 240, 198, 0.22);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-overlay-550);
+  color: var(--color-text-primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+
+.catalogue-back-btn:hover {
+  border-color: rgba(205, 240, 198, 0.36);
+  background: var(--color-accent-soft);
+  box-shadow: 0 8px 18px var(--color-shadow-soft);
+}
+
 .catalogue-filters {
   display: grid;
   gap: 0.7rem;
@@ -76,6 +103,7 @@
 
 .catalogue-input:focus-visible,
 .catalogue-select:focus-visible,
+.catalogue-back-btn:focus-visible,
 .catalogue-submit:focus-visible,
 .catalogue-reset:focus-visible,
 .catalogue-page-link:focus-visible,

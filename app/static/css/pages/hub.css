@@ -1,31 +1,33 @@
 .hub-shell {
   height: var(--page-height);
-  padding: var(--space-6);
+  padding: var(--space-4);
 }
 
 .hub-grid {
   display: grid;
-  grid-template-columns: 1fr 0.36fr;
+  grid-template-columns: 1.28fr 0.92fr;
   gap: var(--space-5);
   height: 100%;
 }
 
 .hub-left-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
   width: 100%;
+  height: 100%;
+  align-self: center;
   justify-self: center;
-  padding: var(--space-4);
-  border: var(--border-regular) solid rgba(196, 235, 192, 0.28);
-  border-radius: var(--radius-md);
-  background:
-    radial-gradient(
-      120% 120% at 10% 0%,
-      rgba(173, 253, 179, 0.08) 0%,
-      transparent 62%
-    ),
-    linear-gradient(165deg, rgba(12, 24, 38, 0.42), rgba(12, 24, 38, 0.2));
-  -webkit-backdrop-filter: blur(0.45vh) saturate(122%);
-  backdrop-filter: blur(0.45vh) saturate(122%);
-  box-shadow: 0 1.1vh 2.6vh rgba(3, 10, 15, 0.35);
+  padding: 0;
+}
+
+.hub-map-frame {
+  position: relative;
+  width: 98%;
+  height: 98%;
+  max-height: calc(100% - 9vh);
 }
 
 .hub-map {
@@ -46,10 +48,142 @@
   text-align: center;
 }
 
+.hub-map-help {
+  position: absolute;
+  top: clamp(0.55rem, 1vh, 0.85rem);
+  right: clamp(0.55rem, 1vh, 0.85rem);
+  z-index: 550;
+  width: max-content;
+}
+
+.hub-map-help > summary {
+  list-style: none;
+}
+
+.hub-map-help > summary::-webkit-details-marker {
+  display: none;
+}
+
+.hub-map-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.1rem;
+  padding: 0.3rem 0.62rem;
+  border: var(--border-thin) solid rgba(230, 246, 228, 0.62);
+  border-radius: var(--radius-pill);
+  background: rgba(12, 27, 20, 0.72);
+  color: rgba(244, 252, 244, 0.95);
+  font-size: clamp(0.7rem, 1.3vh, 0.8rem);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(0.5vh) saturate(120%);
+  backdrop-filter: blur(0.5vh) saturate(120%);
+  box-shadow: 0 0.35vh 1vh rgba(5, 14, 10, 0.35);
+}
+
+.hub-map-help-panel {
+  position: absolute;
+  top: calc(100% + 0.42rem);
+  right: 0;
+  width: min(32ch, 74vw);
+  padding: 0.65rem 0.8rem;
+  border: var(--border-thin) solid rgba(210, 237, 208, 0.56);
+  border-radius: 0.62rem;
+  background: rgba(11, 25, 18, 0.86);
+  color: rgba(235, 247, 236, 0.96);
+  font-size: clamp(0.78rem, 1.42vh, 0.9rem);
+  line-height: 1.45;
+  box-shadow: 0 0.55vh 1.55vh rgba(3, 10, 7, 0.45);
+}
+
 .hub-actions {
   display: grid;
+  grid-template-rows: 1fr 1fr;
+  place-items: stretch;
   align-content: center;
   gap: var(--space-3);
+  width: 90%;
+  height: 90%;
+  align-self: center;
+}
+
+.hub-feature-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 23vh;
+  border-radius: var(--radius-md);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  box-shadow: 0 1.1vh 2.6vh rgba(3, 10, 15, 0.35);
+  overflow: hidden;
+}
+
+.hub-feature-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 18, 12, 0.44) 0%, rgba(8, 18, 12, 0.7) 100%);
+}
+
+.hub-catalogue-card {
+  filter: brightness(1.08) saturate(1.06);
+}
+
+.hub-catalogue-card::after {
+  background: linear-gradient(180deg, rgba(10, 22, 15, 0.22) 0%, rgba(10, 22, 15, 0.46) 100%);
+}
+
+.hub-daily-card {
+  filter: brightness(0.92) saturate(0.95);
+}
+
+.hub-daily-card::after {
+  background: linear-gradient(180deg, rgba(8, 18, 12, 0.54) 0%, rgba(8, 18, 12, 0.78) 100%);
+}
+
+.hub-feature-btn {
+  position: relative;
+  z-index: 1;
+  min-width: 24vh;
+  color: rgba(9, 26, 19, 0.96) !important;
+  border: var(--border-regular) solid rgba(255, 255, 255, 0.78) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.42),
+    rgba(255, 255, 255, 0.18) 58%,
+    rgba(255, 255, 255, 0.1)
+  ) !important;
+  -webkit-backdrop-filter: blur(0.9vh) saturate(145%);
+  backdrop-filter: blur(0.9vh) saturate(145%);
+  box-shadow:
+    0 0.9vh 2vh rgba(7, 14, 11, 0.3),
+    inset 0 0.1vh 0 rgba(255, 255, 255, 0.9);
+}
+
+.hub-feature-btn:hover {
+  border-color: rgba(255, 255, 255, 0.92) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0.24) 58%,
+    rgba(255, 255, 255, 0.12)
+  ) !important;
+}
+
+.hub-feature-btn:focus-visible {
+  box-shadow:
+    0 0 0 0.32vh rgba(255, 255, 255, 0.38),
+    0 0.9vh 2vh rgba(7, 14, 11, 0.3),
+    inset 0 0.1vh 0 rgba(255, 255, 255, 0.9);
+}
+
+.hub-play-world-btn {
+  min-width: 24vh;
 }
 
 .leaflet-popup-content {
@@ -183,9 +317,19 @@
 
   .hub-left-card {
     width: 100%;
+    height: 100%;
   }
 
   .hub-actions {
-    align-content: end;
+    width: 100%;
+    height: 52vh;
+  }
+
+  .hub-feature-card {
+    min-height: 0;
+  }
+
+  .hub-feature-btn {
+    min-width: 20vh;
   }
 }

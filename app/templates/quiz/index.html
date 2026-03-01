@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz - HerbaTerra{% endblock %}
+{% block body_class %}subpage{% endblock %}
+
+{% block head_extras %}
+<style>
+  .quiz-shell {
+    height: calc(100vh - var(--nav-height));
+    padding: 2rem 1.5rem 2.5rem;
+    display: grid;
+    align-content: start;
+    justify-items: center;
+    color: #f5f7ff;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(120, 189, 255, 0.35), transparent 35%),
+      radial-gradient(circle at 80% 80%, rgba(128, 255, 182, 0.2), transparent 40%),
+      linear-gradient(145deg, #10243a, #19352c);
+  }
+
+  .quiz-back-label {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  .quiz-title {
+    margin-top: 0.8rem;
+    margin-bottom: 2.4rem;
+    font-size: clamp(2.4rem, 8vw, 7rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.22);
+  }
+
+  .quiz-cards {
+    width: min(920px, 100%);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.2rem;
+  }
+
+  .quiz-card {
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.12);
+    padding: 1.35rem 1rem;
+    text-align: center;
+    font-size: clamp(1.15rem, 3.4vw, 1.7rem);
+    font-weight: 700;
+    backdrop-filter: blur(5px);
+  }
+
+  .quiz-progress-wrap {
+    width: min(920px, 100%);
+    margin-top: 2.2rem;
+    border-radius: 999px;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .quiz-progress-bar {
+    height: 24px;
+    width: {{ completion_rate|default(0) }}%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+  }
+
+  .quiz-progress-value {
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    opacity: 0.9;
+  }
+
+  @media (max-width: 760px) {
+    .quiz-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="quiz-shell" aria-label="Quiz page">
+  <div class="quiz-back-label" aria-hidden="true">
+    <span style="font-size: 1.4em;">&#8592;</span>
+    <span>Back</span>
+  </div>
+
+  <h1 class="quiz-title">HerbaTerra</h1>
+
+  <div class="quiz-cards" role="list" aria-label="Quiz modes">
+    <div class="quiz-card" role="listitem">Flash Card</div>
+    <div class="quiz-card" role="listitem">Match</div>
+    <div class="quiz-card" role="listitem">Test</div>
+  </div>
+
+  <div class="quiz-progress-wrap" aria-label="Quiz completion progress">
+    <div class="quiz-progress-bar"></div>
+  </div>
+  <p class="quiz-progress-value">{{ completion_rate|default(0) }}%</p>
+</section>
+{% endblock %}

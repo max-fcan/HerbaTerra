@@ -13,6 +13,7 @@
 {% block content %}
 <section class="catalogue-shell container-fluid">
   <header class="catalogue-header">
+    <a class="catalogue-back-btn" href="{{ url_for('pages.hub') }}">Back to Hub</a>
     <h1 class="catalogue-title">Plant Catalogue</h1>
     <p class="catalogue-subtitle">
       {% if catalogue.total_species > 0 %}

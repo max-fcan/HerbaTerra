@@ -14,14 +14,40 @@
 <section class="hub-shell container-fluid">
   <div class="hub-grid">
     <aside class="hub-left-card">
-      <div id="hub-map" class="hub-map" aria-label="Interactive country map"></div>
+      <div class="hub-map-frame">
+        <div id="hub-map" class="hub-map" aria-label="Interactive country map"></div>
+        <details class="hub-map-help">
+          <summary class="hub-map-help-btn">Help / Aide</summary>
+          <div class="hub-map-help-panel" role="note" aria-live="polite">
+            Cliquez sur un pays pour ouvrir les actions.
+            Dans la popup, choisissez Explorer ou Jouer pour ce pays.
+            Utilisez les options de la popup pour passer au niveau continent.
+            Pour une partie monde entier, utilisez le bouton Play (world) sous la carte.
+          </div>
+        </details>
+      </div>
+      <a class="btn btn-theme btn-hub btn-hub-play rounded-pill hub-play-world-btn" href="/play"
+        >Play (world)</a
+      >
     </aside>
 
     <aside class="hub-actions">
-      <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill" href="/catalogue"
-        >Explore</a
+      <div
+        class="hub-feature-card hub-catalogue-card"
+        style="background-image: url('{{ url_for('static', filename='img/catalogue.webp') }}')"
       >
-      <a class="btn btn-theme btn-hub btn-hub-play rounded-pill" href="/play">Play</a>
+        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="/catalogue"
+          >Catalogue</a
+        >
+      </div>
+      <div
+        class="hub-feature-card hub-daily-card"
+        style="background-image: url('{{ url_for('static', filename='img/daily_challenge.jpg') }}')"
+      >
+        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="#"
+          >Daily Challenge (WIP)</a
+        >
+      </div>
     </aside>
   </div>
 </section>

@@ -60,7 +60,7 @@ class Config:
     BASE_DIR = Path(__file__).resolve().parents[1]  # project root, wherever it is
 
     load_dotenv(Path(BASE_DIR) / PRODUCTION_ENV)  # TODO: change to PRODUCTION_ENV in production
-    
+        
     # ================ Application Settings ================
     SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key")
     PORT = _env_int("PORT", 5000)
@@ -73,7 +73,7 @@ class Config:
 
     # ================ Directory and File Paths ================
     DATA_DIR = _env_path("DATA_DIR", BASE_DIR / "data")
-    LOCAL_DB_PATH = _env_path("LOCAL_DB_PATH", BASE_DIR / "data" / "plants.db")
+    LOCAL_DB_PATH = _env_path("LOCAL_DB_PATH", BASE_DIR / "temp" / "plants.db")
 
 
     # ================ Turso Database Settings ================

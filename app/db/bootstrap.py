@@ -238,7 +238,7 @@ def bootstrap_local_replica_from_app(app: Flask) -> BootstrapResult:
     )
     # User logs
     log.info(
-        "\n * Typically runs on %s\n * If it doesn't work, wait a bit and refresh, or try %s",
+        "Bootstrap completed.\n * Typically runs on %s\n * If it doesn't work, wait a bit and refresh, or try %s",
         f"http://127.0.0.1:{app.config.get('PORT', 5000)}",
         f"http://localhost:{app.config.get('PORT', 5000)}",
     )

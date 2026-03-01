@@ -16,15 +16,17 @@
   <div class="play-error-card">
     <p>{{ play_error }}</p>
     <a class="btn btn-theme btn-hub btn-hub-play rounded-pill" href="{{ url_for('pages.hub') }}"
-      >Back To Hub</a
+      >Back to Hub</a
     >
   </div>
   {% else %}
-  <aside class="play-floating-card play-scope-card">{{ scope_display }}</aside>
-
-  <aside class="play-floating-card play-time-card">
-    <strong id="play-timer-value">{{ (timer_seconds // 60) if (timer_seconds // 60) > 0 else 0 }}m {{ (timer_seconds % 60) }}s</strong>
-  </aside>
+  <a class="play-back-link play-back-link-top-left" href="{{ url_for('pages.hub') }}">Back to Hub</a>
+  <div class="play-top-right">
+    <aside class="play-floating-card play-scope-card">{{ scope_display }}</aside>
+    <aside class="play-floating-card play-time-card">
+      <strong id="play-timer-value">{{ (timer_seconds // 60) if (timer_seconds // 60) > 0 else 0 }}m {{ (timer_seconds % 60) }}s</strong>
+    </aside>
+  </div>
 
   <section class="play-map-card" id="play-map-panel">
     <div class="play-map-toolbar">

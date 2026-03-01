@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Home Gallery - HerbaTerra{% endblock %}
+{% block body_class %}subpage{% endblock %}
+
+{% block head_extras %}
+<style>
+  .home-gallery-shell {
+    position: relative;
+    height: calc(100vh - var(--nav-height));
+    overflow: hidden;
+  }
+
+  .home-floating-nav {
+    position: absolute;
+    top: 50%;
+    left: 1.5rem;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .home-floating-chip {
+    min-width: 8.5rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(0, 0, 0, 0.26);
+    color: #f6fbff;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-align: center;
+  }
+
+  .home-gallery-track {
+    position: absolute;
+    inset: 0;
+    margin-inline: auto;
+    width: 85%;
+  }
+
+  .home-gallery-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    animation: homeFade 24s infinite;
+  }
+
+  .home-gallery-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.95) brightness(0.72);
+  }
+
+  .home-gallery-slide:nth-child(1) {
+    animation-delay: 0s;
+  }
+
+  .home-gallery-slide:nth-child(2) {
+    animation-delay: 6s;
+  }
+
+  .home-gallery-slide:nth-child(3) {
+    animation-delay: 12s;
+  }
+
+  .home-gallery-slide:nth-child(4) {
+    animation-delay: 18s;
+  }
+
+  .home-play-label {
+    position: absolute;
+    left: 50%;
+    bottom: 2.5rem;
+    transform: translateX(-50%);
+    z-index: 4;
+    padding: 0.75rem 2.2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(0, 0, 0, 0.35);
+    color: #f6fbff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  @keyframes homeFade {
+    0%,
+    21% {
+      opacity: 1;
+    }
+    25%,
+    100% {
+      opacity: 0;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home-gallery-shell" aria-label="Home gallery page">
+  <aside class="home-floating-nav" aria-label="Home page sections">
+    <span class="home-floating-chip">Quiz</span>
+    <span class="home-floating-chip">Catalogue</span>
+    <span class="home-floating-chip">Tournament</span>
+    <span class="home-floating-chip">Challenge</span>
+  </aside>
+
+  <div class="home-gallery-track">
+    <figure class="home-gallery-slide">
+      <img src="{{ url_for('static', filename='img/rotating-gallery-pictures/pexels-kartik-307184443-34887329.jpg') }}" alt="Landscape gallery image">
+    </figure>
+    <figure class="home-gallery-slide">
+      <img src="{{ url_for('static', filename='img/rotating-gallery-pictures/pexels-sohi-807598.jpg') }}" alt="Forest gallery image">
+    </figure>
+    <figure class="home-gallery-slide">
+      <img src="{{ url_for('static', filename='img/rotating-gallery-pictures/photo-1462275646964-a0e3386b89fa.png') }}" alt="Nature gallery image">
+    </figure>
+    <figure class="home-gallery-slide">
+      <img src="{{ url_for('static', filename='img/rotating-gallery-pictures/tree-oak-landscape-view-53435.jpeg') }}" alt="Oak landscape gallery image">
+    </figure>
+  </div>
+
+  <div class="home-play-label" aria-hidden="true">Play</div>
+</section>
+{% endblock %}

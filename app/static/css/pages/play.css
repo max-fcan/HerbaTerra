@@ -25,10 +25,58 @@
   backdrop-filter: blur(0.35vh);
 }
 
-.play-scope-card,
-.play-time-card {
+.play-top-right {
   position: absolute;
   top: clamp(1rem, 2.4vh, 1.7rem);
+  right: clamp(1rem, 2vw, 1.6rem);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(0.4rem, 0.8vw, 0.75rem);
+}
+
+.play-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.9vh;
+  padding: 0.7vh 1.4vh;
+  border: var(--border-thin) solid rgba(205, 240, 198, 0.42);
+  border-radius: var(--radius-pill);
+  background: rgba(117, 181, 135, 0.18);
+  color: rgba(244, 252, 242, 0.96);
+  font-size: clamp(0.78rem, 1.4vh, 0.88rem);
+  font-weight: 700;
+  letter-spacing: 0.02vh;
+  text-decoration: none;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+
+.play-back-link:hover {
+  border-color: rgba(205, 240, 198, 0.62);
+  background: rgba(117, 181, 135, 0.3);
+  box-shadow: 0 0.8vh 1.8vh rgba(3, 10, 15, 0.35);
+}
+
+.play-back-link:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+.play-back-link-top-left {
+  position: absolute;
+  top: clamp(1rem, 2.4vh, 1.7rem);
+  left: clamp(1rem, 2vw, 1.6rem);
+  z-index: 10;
+}
+
+.play-scope-card,
+.play-time-card {
+  position: static;
   z-index: 5;
   min-height: 3.9vh;
   display: inline-flex;
@@ -43,11 +91,11 @@
 }
 
 .play-scope-card {
-  left: clamp(1rem, 2vw, 1.6rem);
+  order: 1;
 }
 
 .play-time-card {
-  right: clamp(1rem, 2vw, 1.6rem);
+  order: 2;
   gap: 0.7vh;
 }
 
@@ -316,7 +364,20 @@
     bottom: 0.8rem;
   }
 
-  .play-time-card {
+  .play-top-right {
     top: clamp(1rem, 1.8vh, 1.4rem);
+    gap: 0.5rem;
+  }
+
+  .play-back-link-top-left {
+    top: clamp(1rem, 1.8vh, 1.4rem);
+  }
+}
+
+@media (max-width: 680px) {
+  .play-top-right {
+    max-width: calc(100vw - 1.6rem);
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
   }
 }
