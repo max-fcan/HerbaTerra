@@ -12,7 +12,7 @@ from app.services.geocoding import get_country_code_a2_by_code
 bp = Blueprint("catalogue", __name__, url_prefix="/catalogue")
 
 
-@bp.get("/")
+@bp.get("/", strict_slashes=False)
 def catalogue():
     if not is_replica_ready():
         return render_template("db_loading.html", replica_status=get_replica_status()), 503

@@ -36,7 +36,7 @@
         class="hub-feature-card hub-catalogue-card"
         style="background-image: url('{{ url_for('static', filename='img/catalogue.webp') }}')"
       >
-        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="/catalogue"
+        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="{{ url_for('catalogue.catalogue') }}"
           >Catalogue</a
         >
       </div>

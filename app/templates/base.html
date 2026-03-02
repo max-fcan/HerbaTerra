@@ -45,7 +45,7 @@
             <li class="nav-item">
               <a
                 class="nav-link {% if request.path.startswith('/catalogue') %}active{% endif %}"
-                href="/catalogue"
+                href="{{ url_for('catalogue.catalogue') }}"
                 >Catalogue</a
               >
             </li>
