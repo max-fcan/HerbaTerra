@@ -457,7 +457,7 @@
 
   function wrapLongitude(lng) {
     if (!Number.isFinite(lng)) return 0;
-    return ((lng + 180) % 360 + 360) % 360 - 180;
+    return ((((lng + 180) % 360) + 360) % 360) - 180;
   }
 
   function unwrapRingLongitudes(ring) {
@@ -1192,7 +1192,9 @@
               maxZoom: 5,
             });
           } else {
-            const largestRing = getLargestOuterRing(preferredLayer.feature?.geometry);
+            const largestRing = getLargestOuterRing(
+              preferredLayer.feature?.geometry,
+            );
             const centroid = getPolygonCentroid(largestRing);
             if (centroid) {
               map.setView(centroid, 3, { animate: false });
@@ -1211,7 +1213,10 @@
       map.options.maxBoundsViscosity = 0.9;
 
       function applyViewportMinZoom() {
-        const minZoom = Math.max(0, map.getBoundsZoom(constraintBounds, true) - 1);
+        const minZoom = Math.max(
+          0,
+          map.getBoundsZoom(constraintBounds, true) - 1,
+        );
         map.setMinZoom(minZoom);
         if (map.getZoom() < minZoom) {
           map.setZoom(minZoom, { animate: false });
@@ -1264,9 +1269,12 @@
 
     const initializeMap = () => {
       if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(() => {
-          startMapLoad();
-        }, { timeout: 1500 });
+        window.requestIdleCallback(
+          () => {
+            startMapLoad();
+          },
+          { timeout: 1500 },
+        );
       } else {
         window.setTimeout(() => {
           startMapLoad();
@@ -1619,8 +1627,6 @@
       visibleCountInput.addEventListener("change", handleVisibleCountChange);
     }
 
-    carousel.addEventListener("mouseenter", pauseAutoplayTemporarily);
-    carousel.addEventListener("mouseleave", resumeAutoplayIfEnabled);
     carousel.addEventListener("focusin", pauseAutoplayTemporarily);
     carousel.addEventListener("focusout", resumeAutoplayIfEnabled);
     carousel.addEventListener("touchstart", pauseAutoplayTemporarily, {

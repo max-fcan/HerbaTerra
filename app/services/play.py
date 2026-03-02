@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 import re
 from functools import lru_cache
-from math import asin, cos, radians, sin, sqrt
+from math import asin, cos, pow, radians, sin, sqrt
 from typing import Any
 
 from app.db.connections import get_local_db
@@ -17,6 +17,9 @@ from app.services.geocoding import (
 WORLD_SCOPE = "world"
 CONTINENT_SCOPE = "continent"
 COUNTRY_SCOPE = "country"
+MAX_ROUND_SCORE = 5000
+WORLD_PERFECT_DISTANCE_METERS = 150.0
+ROUNDING_TARGET_RATIO = (MAX_ROUND_SCORE - 0.5) / MAX_ROUND_SCORE
 
 
 def _clean_str(value: Any) -> str:
@@ -253,14 +256,14 @@ def get_scope_scale_meters(scope: dict[str, Any]) -> float:
 def compute_geoguessr_score(distance_km: float, scale_meters: float) -> int:
     """
     Calculer le score selon la formule de GeoGuessr.
+    150 m → 5000 points sur toutes les portées (world, continent, pays).
+    L'échelle est ignorée dans l'exposant : seule la distance compte.
     """
     safe_distance_km = max(0.0, float(distance_km))
-    safe_scale_meters = max(1.0, float(scale_meters))
-    # Keep DB scale in meters for diagnostics, but use a km-scale term so decay
-    # is not almost flat on large scopes.
-    effective_scale = max(1.0, safe_scale_meters / 1000.0)
-    raw_score = 5000 * pow(0.99866017, (safe_distance_km * 1000) / effective_scale)
-    # Align with JavaScript Math.round for non-negative values.
+    raw_score = MAX_ROUND_SCORE * pow(
+        ROUNDING_TARGET_RATIO,
+        (safe_distance_km * 1000) / WORLD_PERFECT_DISTANCE_METERS,
+    )
     return int(raw_score + 0.5)
 
 

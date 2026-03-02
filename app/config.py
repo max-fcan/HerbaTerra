@@ -94,7 +94,7 @@ class Config:
 
     # ================ Play Settings ================
     PLAY_ROUNDS = _env_int("PLAY_ROUNDS", 4)
-    PLAY_GUESS_SECONDS = _env_int("PLAY_GUESS_SECONDS", 30)
+    PLAY_GUESS_SECONDS = _env_int("PLAY_GUESS_SECONDS", 60)
     PLAY_REVEAL_AFTER_SUBMIT = _env_bool("PLAY_REVEAL_AFTER_SUBMIT", True)
     PLAY_WORLD_ANTARCTICA_PROBABILITY = _env_float("PLAY_WORLD_ANTARCTICA_PROBABILITY", 0.05)
 

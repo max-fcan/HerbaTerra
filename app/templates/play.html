@@ -23,7 +23,7 @@
   <a class="play-back-link play-back-link-top-left" href="{{ url_for('pages.hub') }}">Back to Hub</a>
   <div class="play-top-right">
     <aside class="play-floating-card play-scope-card">{{ scope_display }}</aside>
-    <aside class="play-floating-card play-time-card">
+    <aside class="play-floating-card play-time-card" id="play-time-card">
       <strong id="play-timer-value">{{ (timer_seconds // 60) if (timer_seconds // 60) > 0 else 0 }}m {{ (timer_seconds % 60) }}s</strong>
     </aside>
   </div>

@@ -1,5 +1,8 @@
 import { loadLeafletAssets } from "./shared/leaflet-assets.js";
-import { getCountryNameFromProps, normalizeIsoCode } from "./shared/map-utils.js";
+import {
+  getCountryNameFromProps,
+  normalizeIsoCode,
+} from "./shared/map-utils.js";
 
 const MAP_CENTER = [20, 0];
 const MAP_ZOOM = 2;
@@ -31,7 +34,9 @@ function getContinentFromProps(props, continentNamesByIsoCode) {
 }
 
 function normalizeLabel(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "")
+    .trim()
+    .toLowerCase();
 }
 
 function getFeatureCountryCodeA2(props) {
@@ -55,7 +60,9 @@ function featureIsInScope(feature, scope, continentNamesByIsoCode) {
 
   const props = feature?.properties || {};
   if (scopeType === "country") {
-    const scopeCountryCode = String(scope?.country_code || "").trim().toUpperCase();
+    const scopeCountryCode = String(scope?.country_code || "")
+      .trim()
+      .toUpperCase();
     if (scopeCountryCode) {
       return getFeatureCountryCodeA2(props) === scopeCountryCode;
     }
@@ -70,7 +77,9 @@ function featureIsInScope(feature, scope, continentNamesByIsoCode) {
       getFeatureContinentName(props, continentNamesByIsoCode),
     );
     const scopeContinent = normalizeLabel(scope?.continent || "");
-    return Boolean(featureContinent && scopeContinent && featureContinent === scopeContinent);
+    return Boolean(
+      featureContinent && scopeContinent && featureContinent === scopeContinent,
+    );
   }
 
   return true;
@@ -135,17 +144,17 @@ function pointInRing(point, ring) {
     const xj = Number(previousPoint[0]);
     const yj = Number(previousPoint[1]);
     if (
-      !Number.isFinite(xi)
-      || !Number.isFinite(yi)
-      || !Number.isFinite(xj)
-      || !Number.isFinite(yj)
+      !Number.isFinite(xi) ||
+      !Number.isFinite(yi) ||
+      !Number.isFinite(xj) ||
+      !Number.isFinite(yj)
     ) {
       continue;
     }
 
     const intersects =
-      yi > y !== yj > y
-      && x < ((xj - xi) * (y - yi)) / ((yj - yi) || Number.EPSILON) + xi;
+      yi > y !== yj > y &&
+      x < ((xj - xi) * (y - yi)) / (yj - yi || Number.EPSILON) + xi;
     if (intersects) inside = !inside;
   }
 
@@ -153,7 +162,8 @@ function pointInRing(point, ring) {
 }
 
 function pointInPolygon(point, polygonCoordinates) {
-  if (!Array.isArray(polygonCoordinates) || !polygonCoordinates.length) return false;
+  if (!Array.isArray(polygonCoordinates) || !polygonCoordinates.length)
+    return false;
   const [outerRing, ...holes] = polygonCoordinates;
   if (!pointInRing(point, outerRing)) return false;
   return !holes.some((holeRing) => pointInRing(point, holeRing));
@@ -202,8 +212,8 @@ function haversineDistanceKm(a, b) {
   const lat2 = toRadians(b.lat);
 
   const h =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2)
-    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   return 2 * earthRadiusKm * Math.asin(Math.sqrt(h));
 }
 
@@ -226,6 +236,7 @@ async function initPlayPage() {
   const shell = document.getElementById("play-shell");
   const mapRoot = document.getElementById("play-map");
   const timerValue = document.getElementById("play-timer-value");
+  const timeCard = document.getElementById("play-time-card");
   const submitBtn = document.getElementById("play-submit-btn");
   const expandBtn = document.getElementById("play-map-expand-btn");
   const mapPanel = document.getElementById("play-map-panel");
@@ -233,15 +244,15 @@ async function initPlayPage() {
   const scoreValue = document.getElementById("play-score-value");
 
   if (
-    !bootstrap
-    || !shell
-    || !mapRoot
-    || !timerValue
-    || !submitBtn
-    || !expandBtn
-    || !mapPanel
-    || !roundCard
-    || !scoreValue
+    !bootstrap ||
+    !shell ||
+    !mapRoot ||
+    !timerValue ||
+    !submitBtn ||
+    !expandBtn ||
+    !mapPanel ||
+    !roundCard ||
+    !scoreValue
   ) {
     return;
   }
@@ -278,6 +289,12 @@ async function initPlayPage() {
 
   function updateTimer() {
     timerValue.textContent = formatTimer(state.remainingSeconds);
+    if (timeCard) {
+      timeCard.classList.toggle(
+        "play-timer-urgent",
+        state.remainingSeconds <= 20 && !state.roundEnded,
+      );
+    }
   }
 
   function stopTimer() {
@@ -290,7 +307,10 @@ async function initPlayPage() {
     mapPanel.classList.toggle("is-expanded", expanded);
     expandBtn.classList.toggle("is-expanded", expanded);
     expandBtn.setAttribute("aria-pressed", expanded ? "true" : "false");
-    expandBtn.setAttribute("aria-label", expanded ? "Collapse map" : "Expand map");
+    expandBtn.setAttribute(
+      "aria-label",
+      expanded ? "Collapse map" : "Expand map",
+    );
 
     if (!state.map) return;
     const refresh = () => {
@@ -319,7 +339,9 @@ async function initPlayPage() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || `Score request failed (${response.status})`);
+        throw new Error(
+          payload.error || `Score request failed (${response.status})`,
+        );
       }
 
       if (payload.status === "pending") {
@@ -348,11 +370,11 @@ async function initPlayPage() {
 
     const distanceText = state.guess
       ? formatDistanceKm(
-        haversineDistanceKm(
-          L.latLng(state.guess.lat, state.guess.lng),
-          solutionLatLng,
-        ),
-      )
+          haversineDistanceKm(
+            L.latLng(state.guess.lat, state.guess.lng),
+            solutionLatLng,
+          ),
+        )
       : "No guess submitted.";
 
     state.solutionMarker = L.circleMarker(solutionLatLng, {
@@ -432,7 +454,8 @@ async function initPlayPage() {
     const props = feature.properties || {};
     const country = getCountryNameFromProps(props);
     const continent =
-      getContinentFromProps(props, bootstrap.continentNamesByIsoCode || {}) || "Unknown continent";
+      getContinentFromProps(props, bootstrap.continentNamesByIsoCode || {}) ||
+      "Unknown continent";
     return { country, continent };
   }
 
@@ -440,7 +463,9 @@ async function initPlayPage() {
     if (!state.map || state.roundEnded) return;
 
     if (state.guessMarker) state.map.removeLayer(state.guessMarker);
-    state.guessMarker = L.marker(latlng, { title: "Your guess" }).addTo(state.map);
+    state.guessMarker = L.marker(latlng, { title: "Your guess" }).addTo(
+      state.map,
+    );
     const guessContext = resolveGuessContext(latlng);
 
     state.guess = {
@@ -469,12 +494,14 @@ async function initPlayPage() {
     await loadLeafletAssets();
   } catch (error) {
     console.error("Failed to load map library.", error);
-    mapRoot.innerHTML = '<p class="play-map-error">Map library failed to load.</p>';
+    mapRoot.innerHTML =
+      '<p class="play-map-error">Map library failed to load.</p>';
     return;
   }
 
   if (typeof window.L === "undefined") {
-    mapRoot.innerHTML = '<p class="play-map-error">Map library failed to load.</p>';
+    mapRoot.innerHTML =
+      '<p class="play-map-error">Map library failed to load.</p>';
     return;
   }
 
@@ -486,12 +513,14 @@ async function initPlayPage() {
   state.map.options.maxBoundsViscosity = 0.8;
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 12,
+    maxZoom: 15,
     attribution: "&copy; OpenStreetMap contributors",
   }).addTo(state.map);
 
   try {
-    const response = await fetch(bootstrap.geojsonUrl, { cache: "force-cache" });
+    const response = await fetch(bootstrap.geojsonUrl, {
+      cache: "force-cache",
+    });
     if (!response.ok) throw new Error(`GeoJSON failed (${response.status})`);
     const geojson = await response.json();
     state.features = Array.isArray(geojson?.features) ? geojson.features : [];
@@ -506,7 +535,8 @@ async function initPlayPage() {
     }).addTo(state.map);
   } catch (error) {
     console.error(error);
-    mapRoot.innerHTML = '<p class="play-map-error">Map data failed to load.</p>';
+    mapRoot.innerHTML =
+      '<p class="play-map-error">Map data failed to load.</p>';
   }
 
   state.map.on("click", (event) => {
