@@ -513,7 +513,7 @@ async function initPlayPage() {
   state.map.options.maxBoundsViscosity = 0.8;
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 15,
+    maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
   }).addTo(state.map);
 
