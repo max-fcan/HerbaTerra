@@ -77,8 +77,8 @@ class Config:
 
 
     # ================ Turso Database Settings ================
-    TURSO500_DATABASE_URL = os.getenv("TURSO500_DATABASE_URL", "")
-    TURSO500_AUTH_TOKEN = os.getenv("TURSO500_AUTH_TOKEN", "")
+    # TURSO500_DATABASE_URL = os.getenv("TURSO500_DATABASE_URL", "")
+    # TURSO500_AUTH_TOKEN = os.getenv("TURSO500_AUTH_TOKEN", "")
     TURSO100_DATABASE_URL = os.getenv("TURSO100_DATABASE_URL", "")
     TURSO100_AUTH_TOKEN = os.getenv("TURSO100_AUTH_TOKEN", "")
 
