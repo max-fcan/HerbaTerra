@@ -38,7 +38,7 @@
             <li class="nav-item">
               <a
                 class="nav-link {% if request.path.startswith('/play') %}active{% endif %}"
-                href="/play"
+                href="{{ url_for('pages.hub') }}"
                 >Play</a
               >
             </li>
@@ -52,7 +52,7 @@
             <li class="nav-item">
               <a
                 class="nav-link {% if request.path == '/about' %}active{% endif %}"
-                href="/about"
+                href="{{ url_for('pages.about') }}"
                 >About</a
               >
             </li>
