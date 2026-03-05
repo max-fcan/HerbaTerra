@@ -26,13 +26,15 @@ body.subpage,
 body.hub-page,
 body.play-page,
 body.catalogue-page,
-body.species-page {
+body.species-page,
+body.about-page {
   background: linear-gradient(160deg, var(--color-subpage-a), var(--color-subpage-b));
   background-attachment: fixed;
 }
 
 body.catalogue-page,
-body.species-page {
+body.species-page,
+body.about-page {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -58,7 +60,8 @@ body.species-page {
 }
 
 body.catalogue-page .page-shell,
-body.species-page .page-shell {
+body.species-page .page-shell,
+body.about-page .page-shell {
   min-height: 100vh;
   height: auto;
 }
