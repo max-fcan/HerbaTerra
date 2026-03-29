@@ -67,8 +67,8 @@
   background: var(--color-surface-overlay-500);
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .about-card p {
@@ -116,8 +116,8 @@
   background: var(--color-surface-overlay-500);
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   transition: border-color var(--motion-fast), background var(--motion-fast);
 }
 

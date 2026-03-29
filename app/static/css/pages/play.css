@@ -26,6 +26,7 @@
     ),
     linear-gradient(165deg, rgba(7, 14, 22, 0.7), rgba(7, 14, 22, 0.55));
   box-shadow: 0 1.1vh 2.7vh rgba(3, 10, 15, 0.45);
+  -webkit-backdrop-filter: blur(0.35vh);
   backdrop-filter: blur(0.35vh);
 }
 
