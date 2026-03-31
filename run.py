@@ -1,5 +1,5 @@
 from app import create_app
-from app.config import ProductionConfig, TestConfig
+from app.config import DevelopmentConfig, TestConfig, ProductionConfig
 
 if __name__ == "__main__":
     app = create_app(ProductionConfig)

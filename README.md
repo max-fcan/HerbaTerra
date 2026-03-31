@@ -1,25 +1,23 @@
 # HerbaTerra
 
-HerbaTerra is a Flask application for exploring global plant occurrence data through maps, catalogue views, and a location-guessing game. The app boots from a local SQLite replica that is synchronized from Turso, so most runtime queries stay local once startup sync completes.
+HerbaTerra is a Flask application for exploring global plant occurrence data through maps, catalogue views, and a location-guessing game. The app boots from a local SQLite replica that is synchronized from Turso, so that runtime queries stay local once sync completes, on startup.
 
-## What the app includes
+## Features
 
-- An interactive hub map that links each country to scoped catalogue and play views
-- A plant catalogue with search, taxonomy filters, geographic filters, and sort options
-- Species detail pages with a distribution map and paginated image gallery
-- A timed GeoGuessr-style play mode with world, continent, and country scopes
-- A startup loading flow that blocks protected routes until the local replica is ready
+- An interactive map enabling users to explore and play with plants limited to a certain geographical region.
+- A plant catalogue with search, taxonomy filters, geographic filters, and "sort by" options.
+- Detail "species" pages that include a distribution heatmap and an image gallery
+- A timed play mode with world, continent, and country scopes
 
 ## Stack
 
 | Layer | Technology |
 | --- | --- |
 | Backend | Python 3, Flask |
-| Database | Turso, libsql, SQLite replica |
+| Database | Turso, libsql, SQLite |
 | Frontend | Jinja2 templates, Bootstrap 5, custom CSS |
 | Mapping | Leaflet, OpenStreetMap tiles, GeoJSON |
 | 3D landing page | Three.js |
-| Configuration | python-dotenv |
 
 ## Running locally
 
@@ -47,7 +45,7 @@ pip install -r requirements.txt
 
 ### 3. Configure environment variables
 
-Create a `.env.production` file in the project root. `app/config.py` loads this file automatically for the default runtime.
+Create a `.env` file in the project root. `app/config.py` loads this file automatically for the default runtime.
 
 Required values:
 
