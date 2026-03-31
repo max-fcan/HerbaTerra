@@ -32,12 +32,12 @@ def create_app(config_class=Config) -> Flask:
         app.config.get("WERKZEUG_LOG_LEVEL", "WARNING")
     )
 
-    app.jinja_env.filters["human_number"] = _human_number # Implémenté par l'IA, pour formater les nombres de manière plus lisible dans les templates Jinja.
+    app.jinja_env.filters["human_number"] = _human_number  # AI-implemented helper to format numbers more readably in Jinja templates.
 
     init_db(app)
     register_routes(app)
 
-    @app.before_request # Implémenté par l'IA, pour restreindre l'accès aux routes tant que la réplica n'est pas prête, pour éviter le risque de corruption de la base de données locale.
+    @app.before_request  # AI-implemented guard that restricts route access until the replica is ready to avoid local database corruption.
     def gate_routes_until_replica_ready():
         endpoint = request.endpoint or ""
         if endpoint in {"static", "pages.index", "pages.start", "api.replica_status_api"}:

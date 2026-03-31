@@ -1,0 +1,18 @@
+{# AI note: This template was realised with the help of AI. #}
+{% macro button_link(href, label, class_name='btn-outline-light btn-sm rounded-pill') -%}
+<a class="btn {{ class_name }}" href="{{ href }}">{{ label | safe }}</a>
+{%- endmacro %}
+
+{% macro section_heading(title, subtitle='', kicker='', title_class='h4') -%}
+<div>
+  {% if kicker %}<p class="app-kicker mb-2">{{ kicker }}</p>{% endif %}
+  <h2 class="{{ title_class }} mb-{% if subtitle %}1{% else %}0{% endif %}">{{ title }}</h2>
+  {% if subtitle %}<p class="text-body-secondary mb-0">{{ subtitle }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro pill_list(items, class_name='badge rounded-pill text-bg-secondary px-3 py-2') -%}
+<div class="d-flex flex-wrap gap-2">
+  {% for item in items %}<span class="{{ class_name }}">{{ item }}</span>{% endfor %}
+</div>
+{%- endmacro %}

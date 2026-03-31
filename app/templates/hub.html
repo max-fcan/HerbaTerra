@@ -1,54 +1,62 @@
+{# AI note: This template was realised with the help of AI. #}
 {% extends "base.html" %}
 
 {% block title %}Hub | HerbaTerra{% endblock %}
 {% block body_class %}hub-page{% endblock %}
 
-{% block head_extras %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/pages/hub.css') }}"
-/>
-{% endblock %}
-
 {% block content %}
-<section class="hub-shell container-fluid">
-  <div class="hub-grid">
-    <aside class="hub-left-card">
-      <div class="hub-map-frame">
+{% set feature_cards = [
+  {
+    "eyebrow": "Explore",
+    "title": "Browse the catalogue by family, genus, country, or continent.",
+    "cta": "Open Catalogue",
+    "href": url_for('catalogue.catalogue'),
+    "image": "img/catalogue.jpg",
+    "button_class": "btn-light text-dark"
+  },
+  {
+    "eyebrow": "Daily Challenge",
+    "title": "A shared daily run will land here once the challenge mode is ready.",
+    "cta": "Daily Challenge (WIP)",
+    "href": "#",
+    "image": "img/daily_challenge.jpg",
+    "button_class": "btn-outline-light"
+  }
+] %}
+<section class="container-xxl hub-shell py-4">
+  <div class="row g-4 h-100 align-items-stretch">
+    <div class="col-12 col-xl-8">
+      <div class="app-panel hub-map-panel h-100">
         <div id="hub-map" class="hub-map" aria-label="Interactive country map"></div>
-        <details class="hub-map-help">
-          <summary class="hub-map-help-btn">Help / Aide</summary>
-          <div class="hub-map-help-panel" role="note" aria-live="polite">
-            Cliquez sur un pays pour ouvrir les actions.
-            Dans la popup, choisissez Explorer ou Jouer pour ce pays.
-            Utilisez les options de la popup pour passer au niveau continent.
-            Pour une partie monde entier, utilisez le bouton Play (world) sous la carte.
+        <details class="hub-help">
+          <summary class="btn btn-sm btn-dark rounded-pill px-3">Help</summary>
+          <div class="hub-help-card small" role="note" aria-live="polite">
+            Click a country to open its actions. In the popup, choose Explore or Play.
+            Use the dropdown to switch to the continent level, or launch a world run directly.
           </div>
         </details>
+        <a class="btn btn-success rounded-pill px-4 hub-world-play" href="{{ url_for('play.play_home') }}">Play (world)</a>
       </div>
-      <a class="btn btn-theme btn-hub btn-hub-play rounded-pill hub-play-world-btn" href="/play"
-        >Play (world)</a
-      >
-    </aside>
+    </div>
 
-    <aside class="hub-actions">
-      <div
-        class="hub-feature-card hub-catalogue-card"
-        style="background-image: url('{{ url_for('static', filename='img/catalogue.webp') }}')"
-      >
-        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="{{ url_for('catalogue.catalogue') }}"
-          >Catalogue</a
-        >
+    <div class="col-12 col-xl-4">
+      <div class="row g-3 h-100">
+        {% for card in feature_cards %}
+        <div class="col-12">
+          <article
+            class="app-panel hub-feature-card h-100 d-flex align-items-end"
+            style="--card-image: url('{{ url_for('static', filename=card.image) }}');"
+          >
+            <div class="p-4">
+              <p class="app-kicker mb-3">{{ card.eyebrow }}</p>
+              <h2 class="h4 mb-3">{{ card.title }}</h2>
+              <a class="btn {{ card.button_class }} rounded-pill px-4" href="{{ card.href }}">{{ card.cta }}</a>
+            </div>
+          </article>
+        </div>
+        {% endfor %}
       </div>
-      <div
-        class="hub-feature-card hub-daily-card"
-        style="background-image: url('{{ url_for('static', filename='img/daily_challenge.jpg') }}')"
-      >
-        <a class="btn btn-theme btn-hub btn-hub-explore rounded-pill hub-feature-btn" href="#"
-          >Daily Challenge (WIP)</a
-        >
-      </div>
-    </aside>
+    </div>
   </div>
 </section>
 {% endblock %}
@@ -59,6 +67,7 @@
 </template>
 
 <script>
+  // Server-side URLs and lookup tables are injected here so the module can stay static.
   window.__hubMapBootstrap = {
     geojsonUrl: {{ geojson_url | tojson }},
     continentNamesByIsoCode: {{ continent_names_by_iso_code | tojson }},

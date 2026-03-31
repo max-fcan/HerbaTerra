@@ -1,4 +1,4 @@
-# Version avec le 'threading' implementé par l'IA pour pouvoir gérer le bootstrap en arrière-plan.
+# Version with AI-implemented threading to handle bootstrap work in the background.
 
 from __future__ import annotations
 

@@ -1,8 +1,14 @@
+// AI note: This script was realised with the help of AI.
 import * as THREE from "./vendor/three/three.module.js";
 
 import getStarfield from "./earth/getStarfield.js";
 import { getFresnelMat } from "./earth/getFresnelMat.js";
 
+// Third-party attribution:
+// - Three.js runtime is vendored locally in ./vendor/three/three.module.js under its MIT license.
+// - This landing-scene implementation is adapted from bobbyroe/threejs-earth:
+//   https://github.com/bobbyroe/threejs-earth
+// - The scene structure, layered Earth treatment, and helper modules were then refactored into this app.
 const container = document.getElementById("earth-canvas");
 
 if (!container || !hasWebGLSupport()) {

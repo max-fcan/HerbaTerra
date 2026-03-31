@@ -1,11 +1,8 @@
+{# AI note: This template was realised with the help of AI. #}
 {% extends "base.html" %}
 
 {% block title %}HerbaTerra | Learn Plants by Place{% endblock %}
 {% block body_class %}landing-page{% endblock %}
-
-{% block head_extras %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/landing.css') }}" />
-{% endblock %}
 
 {% block content %}
 <div
@@ -14,18 +11,20 @@
   aria-hidden="true"
 ></div>
 
-<section class="landing-shell container-fluid">
-  <div class="hero-wrap">
-    <article class="title-card text-center">
-      <h1 class="hero-title">HerbaTerra</h1>
-      <p class="hero-subtitle">Travel the world, one plant at a time.</p>
+<section class="container-xxl app-stage d-flex align-items-center justify-content-center px-3 py-4">
+  <div class="landing-hero text-center">
+    <article class="landing-frame mx-auto p-4 p-lg-5">
+      <p class="app-kicker mb-3">Learn Plants by Place</p>
+      <h1 class="display-2 mb-3">HerbaTerra</h1>
+      <p class="lead text-body-secondary mb-0">Travel the world, one plant at a time.</p>
+      <a class="btn btn-success btn-lg rounded-pill px-5 mt-4 landing-action" href="{{ url_for('pages.start') }}">Start Playing</a>
     </article>
-    <a class="btn btn-theme btn-start rounded-pill" href="{{ url_for('pages.start') }}">Start Playing</a>
   </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
+{# Source note: the landing Earth animation is implemented in landing-background.js and adapted from bobbyroe/threejs-earth. #}
 <script
   type="module"
   src="{{ url_for('static', filename='js/landing-background.js') }}"

@@ -1,5 +1,8 @@
+// AI note: This script was realised with the help of AI.
 import * as THREE from "../vendor/three/three.module.js";
 
+// Adapted from the helper pattern used in bobbyroe/threejs-earth:
+// https://github.com/bobbyroe/threejs-earth
 export function getFresnelMat({ rimHex = 0x0088ff, facingHex = 0x000000 } = {}) {
     const uniforms = {
         color1: { value: new THREE.Color(rimHex) },

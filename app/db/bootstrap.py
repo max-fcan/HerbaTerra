@@ -1,4 +1,4 @@
-# Version avec le 'threading' implementé par l'IA pour pouvoir gérer le bootstrap en arrière-plan.
+# Version with AI-implemented threading to handle bootstrap work in the background.
 
 from __future__ import annotations
 
@@ -246,7 +246,7 @@ def bootstrap_local_replica_from_app(app: Flask) -> BootstrapResult:
 
 def _first_non_empty_config(app: Flask, *keys: str) -> str:
     """
-    Fonction utilitaire pour récupérer la première valeur de configuration non vide parmi une liste de clés présélectionnées.
+    Utility function that returns the first non-empty config value from a predefined list of keys.
     """
     for key in keys:
         value = str(app.config.get(key, "")).strip()

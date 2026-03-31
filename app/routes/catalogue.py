@@ -7,7 +7,11 @@ from app.services.catalogue import (
     parse_catalogue_filters,
     get_species_detail,
 )
-from app.services.geocoding import get_country_code_a2_by_code
+from app.services.geocoding import (
+    get_continent_name_by_code,
+    get_country_code_a2_by_code,
+    get_country_name_by_code,
+)
 
 bp = Blueprint("catalogue", __name__, url_prefix="/catalogue")
 
@@ -27,14 +31,28 @@ def catalogue():
     )
 
 
-@bp.get("/species/<path:species_name>") # Avec l'aide de l'IA, permet d'avoir une infinité de routes pour les espèces, sans avoir à les définir une par une. Le nom de l'espèce est passé en paramètre dans l'URL, et la fonction catalogue_species s'occupe de récupérer les données correspondantes et d'afficher la page de détail de l'espèce.
+@bp.get("/species/<path:species_name>")  # AI-assisted route pattern that supports arbitrary species pages without defining them one by one.
 def catalogue_species(species_name: str):
     if not is_replica_ready():
         return render_template("db_loading.html", replica_status=get_replica_status()), 503
+
+    gallery_page = max(1, request.args.get("images_page", default=1, type=int) or 1)
+    gallery_country_code = str(request.args.get("country_code", "") or "").strip().upper()
+    gallery_continent_code = str(request.args.get("continent_code", "") or "").strip().upper()
+
+    if gallery_country_code and not get_country_name_by_code(gallery_country_code):
+        gallery_country_code = ""
+    if gallery_country_code:
+        gallery_continent_code = ""
+    elif gallery_continent_code and not get_continent_name_by_code(gallery_continent_code):
+        gallery_continent_code = ""
+
     species_detail = get_species_detail(
         species_name,
-        initial_limit=25,
-        include_country_map_stats=False,
+        gallery_page=gallery_page,
+        gallery_country_code=gallery_country_code,
+        gallery_continent_code=gallery_continent_code,
+        include_country_map_stats=True,
     )
     if species_detail is None:
         abort(404)
@@ -51,12 +69,13 @@ def catalogue_species(species_name: str):
     return render_template(
         "catalogue_species.html",
         species=species_detail,
-        images_api_url=url_for(
-            "api.catalogue_species_images_api", species_name=species_name
-        ),
-        map_stats_api_url=url_for(
-            "api.catalogue_species_map_stats_api", species_name=species_name
-        ),
+        gallery_filters={
+            "country_code": gallery_country_code,
+            "country": get_country_name_by_code(gallery_country_code) if gallery_country_code else "",
+            "continent_code": gallery_continent_code,
+            "continent": get_continent_name_by_code(gallery_continent_code) if gallery_continent_code else "",
+        },
+        species_url=url_for("catalogue.catalogue_species", species_name=species_name),
         geojson_url=url_for("geo.geojson_file", filename=selected_geojson_file),
         country_code_a2_by_iso_code=country_code_a2_by_iso_code,
     )

@@ -16,6 +16,7 @@ from app.services.geocoding import (
 ALLOWED_SORTS = {"popular", "media", "alpha"}
 ALLOWED_PER_PAGE = {10, 25, 50}
 TOP_LOCATIONS_LIMIT = 16
+SPECIES_GALLERY_PER_PAGE = 12
 
 
 def _safe_int(value: Any, default: int) -> int:
@@ -40,10 +41,10 @@ def _convert_to_medium_image(url: str | None) -> str | None:
     return None if not url else url.replace("/original", "/medium")
 
 
-@lru_cache(maxsize=1024) # Cache ajouté par l'IA
+@lru_cache(maxsize=1024)  # Cache added with AI assistance
 def _continent_code_for_country_code(country_code: str) -> str:
     """
-    Fonction utilitaire pour obtenir le code de continent à partir d'un code de pays.
+    Utility function that returns the continent code for a given country code.
     """
     normalized_country_code = _clean_str(country_code).upper()
     if not normalized_country_code:
@@ -52,10 +53,10 @@ def _continent_code_for_country_code(country_code: str) -> str:
     return (get_continent_code_by_name(continent_name) or "").upper()
 
 
-@lru_cache(maxsize=16) # Cache rajouté par l'IA
+@lru_cache(maxsize=16)  # Cache added with AI assistance
 def _country_codes_for_continent(continent_code: str) -> tuple[str, ...]:
     """
-    Fonction utilitaire, implémentée par l'IA, pour obtenir la liste des codes de pays appartenant à un continent donné.
+    AI-implemented utility function that returns the list of country codes for a given continent.
     """
     normalized_continent_code = _clean_str(continent_code).upper()
     if not normalized_continent_code:
@@ -77,28 +78,29 @@ def _country_codes_for_continent(continent_code: str) -> tuple[str, ...]:
 
 
 def _execute(sql: str, params: list[Any] | tuple[Any, ...] | None = None) -> Any:
-    """Fonction utilitaire pour exécuter une requête SQL avec des paramètres donnés."""
+    """Utility function that executes a SQL query with the provided parameters."""
     return get_local_db().execute(sql, params or [])
 
 
 def _query_dicts(
     sql: str, params: list[Any] | tuple[Any, ...] | None = None
 ) -> list[dict[str, Any]]:
-    """Fonction utilitaire pour exécuter une requête SQL et retourner les résultats sous forme de liste de dictionnaires."""
+    """Utility function that executes a SQL query and returns the results as a list of dictionaries."""
     return [dict(row) for row in _execute(sql, params).fetchall()]
 
 
 def _query_one_dict(
     sql: str, params: list[Any] | tuple[Any, ...] | None = None
 ) -> dict[str, Any] | None:
-    """Fonction utilitaire pour exécuter une requête SQL et retourner le premier résultat sous forme de dictionnaire."""
+    """Utility function that executes a SQL query and returns the first result as a dictionary."""
     row = _execute(sql, params).fetchone()
     return dict(row) if row else None
 
 
 def _build_species_where_clause(filters: dict[str, Any]) -> tuple[str, list[Any]]:
     """
-    Faite par l'IA. Construire la clause WHERE de la requête SQL pour filtrer les espèces en fonction des filtres donnés. Retourne la clause WHERE et la liste des paramètres correspondants.
+    AI-assisted helper that builds the SQL WHERE clause for species filtering.
+    Returns both the WHERE clause and the corresponding parameter list.
     """
     conditions: list[str] = []
     params: list[Any] = []
@@ -165,7 +167,7 @@ def _build_species_where_clause(filters: dict[str, Any]) -> tuple[str, list[Any]
 
 
 def _get_sort_sql(sort_key: str, alias: str = "s") -> str:
-    """Fonction utilitaire pour obtenir la clause ORDER BY d'après la clé de tri donnée."""
+    """Utility function that returns the ORDER BY clause for the given sort key."""
     prefix = f"{alias}." if alias else ""
     if sort_key == "media":
         return f"{prefix}image_count DESC, {prefix}species ASC"
@@ -175,7 +177,7 @@ def _get_sort_sql(sort_key: str, alias: str = "s") -> str:
 
 
 def parse_catalogue_filters(args: Any) -> dict[str, Any]:
-    """Fonction utilitaire pour parser les filtres de la page de catalogue à partir des arguments de requête. Nettoie les valeurs, applique les valeurs par défaut, et valide les options."""
+    """Parse catalogue page filters from request args, clean the values, apply defaults, and validate supported options."""
     q = _clean_str(args.get("q"))
     family = _clean_filter_value(args.get("family"), {"all", "all families"})
     genus = _clean_filter_value(args.get("genus"), {"all", "all genera"})
@@ -221,9 +223,9 @@ def parse_catalogue_filters(args: Any) -> dict[str, Any]:
     }
 
 
-@lru_cache(maxsize=1) # Cache ajouté par l'IA
+@lru_cache(maxsize=1)  # Cache added with AI assistance
 def _get_filter_options_cached() -> dict[str, list[dict[str, str]]]:
-    """Fonction utilitaire pour obtenir les options de filtre mises en cache."""
+    """Utility function that returns the cached filter options."""
     family_rows = _query_dicts(
         """
         SELECT DISTINCT family
@@ -284,13 +286,13 @@ def _get_filter_options_cached() -> dict[str, list[dict[str, str]]]:
 
 
 def get_filter_options() -> dict[str, list[dict[str, str]]]:
-    """Fonction utilitaire pour obtenir les options de filtre mises en cache."""
+    """Utility function that returns the cached filter options."""
     cached = _get_filter_options_cached()
     return {key: [dict(option) for option in options] for key, options in cached.items()}
 
 
 def _build_catalogue_page(filters: dict[str, Any]) -> dict[str, Any]:
-    """Fonction principale pour construire les données de la page de catalogue en fonction des filtres donnés. Exécute les requêtes SQL nécessaires pour récupérer les espèces filtrées, les compteurs, et les échantillons de pays et d'images."""
+    """Main function that builds catalogue page data from the given filters, including filtered species, counters, and country/image samples."""
     where_sql, where_params = _build_species_where_clause(filters)
 
     count_row = _query_one_dict(
@@ -388,7 +390,7 @@ def _build_catalogue_page(filters: dict[str, Any]) -> dict[str, Any]:
 
 
 def _is_default_catalogue_filters(filters: dict[str, Any]) -> bool:
-    """Fonction utilitaire pour vérifier si les filtres donnés sont les filtres par défaut (aucun filtre)."""
+    """Utility function that checks whether the given filters are the default no-filter state."""
     return (
         (filters.get("q") or "") == ""
         and (filters.get("family") or "") == ""
@@ -404,8 +406,8 @@ def _is_default_catalogue_filters(filters: dict[str, Any]) -> bool:
 @lru_cache(maxsize=1)
 def _get_default_catalogue_page_cached() -> dict[str, Any]:
     """
-    Implementé par l'IA.
-    Mettre en cache la page de catalogue par défaut (sans filtres) pour accélérer le chargement de la page d'accueil et de la page de catalogue sans filtres.
+    AI-implemented helper.
+    Cache the default catalogue page with no filters to speed up the home page and the unfiltered catalogue page.
     """
     return _build_catalogue_page(
         {
@@ -425,8 +427,8 @@ def _get_default_catalogue_page_cached() -> dict[str, Any]:
 
 def get_catalogue_page(filters: dict[str, Any]) -> dict[str, Any]:
     """
-    Implementé par l'IA.
-    Récupérer les données de la page de catalogue en fonction des filtres. Si les filtres sont les filtres par défaut (aucun filtre), utiliser la version mise en cache de la page pour accélérer le chargement.
+    AI-implemented helper.
+    Retrieve catalogue page data for the given filters. If the filters are the default no-filter set, use the cached version to speed up loading.
     """
     if not _is_default_catalogue_filters(filters):
         return _build_catalogue_page(filters)
@@ -443,7 +445,7 @@ def get_species_images_page(
     continent_code: str | None = None,
     limit: int = 25,
 ) -> dict[str, Any]:
-    """Fonction principale pour récupérer les données de la page d'images d'une espèce donnée."""
+    """Main function that retrieves image page data for a given species."""
     page_limit = max(1, min(limit, 25))
     params: list[Any] = [species_name]
     conditions: list[str] = []
@@ -458,7 +460,7 @@ def get_species_images_page(
         conditions.append("o.continent_code = ?")
         params.append(normalized_continent_code)
 
-    # Pagination basée sur le couple (gbifID, rowid) pour garantir un ordre stable et afficher les images les plus récentes en premier (généralement plus belles). 
+    # Pagination is based on the (gbifID, rowid) pair to keep ordering stable and show the newest images first.
     if cursor_gbifid is not None and cursor_rowid is not None:
         conditions.append("(o.gbifID < ? OR (o.gbifID = ? AND i.rowid < ?))")
         params.extend([cursor_gbifid, cursor_gbifid, cursor_rowid])
@@ -469,7 +471,7 @@ def get_species_images_page(
         conditions.append("i.rowid < ?")
         params.append(cursor_rowid)
 
-    # Construire la clause WHERE en fonction de toutes les conditions
+    # Build the WHERE clause from all active conditions.
     where_tail = "".join(f" AND {condition}" for condition in conditions)
     rows = _query_dicts(
         f"""
@@ -518,7 +520,7 @@ def get_species_images_page(
         for row in page_rows
     ]
 
-    # Déterminer les curseurs pour la page suivante à partir du dernier élément de la page.
+    # Derive the next-page cursors from the last item on the current page.
     next_cursor_gbifid: int | None = None
     next_cursor_rowid: int | None = None
     if has_more and items:
@@ -531,6 +533,99 @@ def get_species_images_page(
         "next_cursor_gbifid": next_cursor_gbifid,
         "next_cursor_rowid": next_cursor_rowid,
         "has_more": has_more,
+    }
+
+
+def get_species_gallery_page(
+    species_name: str,
+    page: int = 1,
+    per_page: int = SPECIES_GALLERY_PER_PAGE,
+    country_code: str | None = None,
+    continent_code: str | None = None,
+) -> dict[str, Any]:
+    page_size = max(1, min(int(per_page), 24))
+    params: list[Any] = [species_name]
+    conditions: list[str] = []
+
+    normalized_country_code = _clean_str(country_code).upper()
+    normalized_continent_code = _clean_str(continent_code).upper()
+
+    if normalized_country_code:
+        conditions.append("UPPER(o.country_code) = ?")
+        params.append(normalized_country_code)
+        normalized_continent_code = ""
+    elif normalized_continent_code:
+        conditions.append("UPPER(o.continent_code) = ?")
+        params.append(normalized_continent_code)
+
+    where_tail = "".join(f" AND {condition}" for condition in conditions)
+
+    count_row = _query_one_dict(
+        f"""
+        SELECT COUNT(*) AS total_images
+        FROM occurrences o
+        JOIN images i ON i.gbifID = o.gbifID
+        WHERE o.species = ?
+          {where_tail}
+        """,
+        params,
+    )
+    total_images = int((count_row or {}).get("total_images") or 0)
+    total_pages = max(1, math.ceil(total_images / page_size)) if total_images > 0 else 1
+    current_page = min(max(1, int(page)), total_pages)
+
+    rows = _query_dicts(
+        f"""
+        SELECT
+            o.gbifID AS gbifID,
+            i.rowid AS rowid,
+            i.url AS url_original,
+            i.license AS license,
+            i.creator AS creator,
+            o.country AS country,
+            o.country_code AS country_code,
+            o.continent AS continent,
+            o.continent_code AS continent_code,
+            o.state_province AS state_province,
+            o.year AS year,
+            o.month AS month
+        FROM occurrences o
+        JOIN images i ON i.gbifID = o.gbifID
+        WHERE o.species = ?
+          {where_tail}
+        ORDER BY o.gbifID DESC, i.rowid DESC
+        LIMIT ? OFFSET ?
+        """,
+        [*params, page_size, (current_page - 1) * page_size],
+    )
+
+    return {
+        "items": [
+            {
+                "gbifID": _safe_int(row.get("gbifID"), -1),
+                "rowid": _safe_int(row.get("rowid"), -1),
+                "url_original": row.get("url_original"),
+                "url_medium": _convert_to_medium_image(row.get("url_original")),
+                "license": row.get("license"),
+                "creator": row.get("creator"),
+                "country": row.get("country"),
+                "country_code": row.get("country_code"),
+                "continent": row.get("continent"),
+                "continent_code": row.get("continent_code"),
+                "state_province": row.get("state_province"),
+                "year": row.get("year"),
+                "month": row.get("month"),
+            }
+            for row in rows
+        ],
+        "page": current_page,
+        "per_page": page_size,
+        "total_images": total_images,
+        "total_pages": total_pages,
+        "has_previous": current_page > 1,
+        "has_next": current_page < total_pages,
+        "country_code": normalized_country_code,
+        "continent_code": normalized_continent_code,
     }
 
 
@@ -666,10 +761,13 @@ def get_species_country_map_stats(species_name: str) -> list[dict[str, Any]]:
 
 def get_species_detail(
     species_name: str,
-    initial_limit: int = 25,
+    gallery_page: int = 1,
+    gallery_per_page: int = SPECIES_GALLERY_PER_PAGE,
+    gallery_country_code: str | None = None,
+    gallery_continent_code: str | None = None,
     include_country_map_stats: bool = True,
 ) -> dict[str, Any] | None:
-    """Fonction simple, qui récupère les détails d'une espèce donnée, y compris les statistiques d'occurrence, les pays et continents où elle est présente, et un échantillon d'images. Utilisée pour construire la page détaillée d'une espèce."""
+    """Retrieve species details and the current server-rendered gallery page."""
     species_row = _query_one_dict(
         """
         SELECT
@@ -727,5 +825,11 @@ def get_species_detail(
             if include_country_map_stats
             else []
         ),
-        "initial_images": get_species_images_page(species_name=species_name, limit=initial_limit),
+        "gallery": get_species_gallery_page(
+            species_name=species_name,
+            page=gallery_page,
+            per_page=gallery_per_page,
+            country_code=gallery_country_code,
+            continent_code=gallery_continent_code,
+        ),
     }

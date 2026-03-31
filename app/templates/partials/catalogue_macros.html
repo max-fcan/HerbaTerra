@@ -1,0 +1,43 @@
+{# AI note: This template was realised with the help of AI. #}
+{% macro filter_select(field) -%}
+<div class="col-12 col-md-6 col-xl-4">
+  <label class="form-label" for="catalogue-{{ field.name }}">{{ field.label }}</label>
+  <select id="catalogue-{{ field.name }}" class="form-select" name="{{ field.name }}">
+    <option value="">{{ field.placeholder }}</option>
+    {% for option in field.options %}
+    <option value="{{ option.value }}" {% if field.value == option.value %}selected{% endif %}>{{ option.label }}</option>
+    {% endfor %}
+  </select>
+</div>
+{%- endmacro %}
+
+{% macro species_card(item) -%}
+<div class="col">
+  <a href="{{ url_for('catalogue.catalogue_species', species_name=item.species) }}" class="card h-100 text-decoration-none catalogue-card">
+    <figure class="catalogue-card-media mb-0">
+      {% if item.image_url %}
+      <img
+        loading="lazy"
+        src="{{ item.image_url }}"
+        alt="{{ item.species }}"
+        onerror="this.outerHTML='&lt;span class=&quot;catalogue-card-image-fallback&quot;&gt;No preview&lt;/span&gt;'"
+      />
+      {% else %}
+      <span class="catalogue-card-image-fallback">No preview</span>
+      {% endif %}
+    </figure>
+
+    <div class="card-body">
+      {% if item.common_name_en %}<h2 class="h6 mb-1">{{ item.common_name_en }}</h2>{% endif %}
+      <p class="mb-2 fst-italic text-body-secondary">{{ item.species }}</p>
+      <p class="small text-body-secondary mb-0">{{ item.sample_country }} <span aria-hidden="true">&middot;</span> {{ item.occurrence_count | human_number }} obs.</p>
+    </div>
+  </a>
+</div>
+{%- endmacro %}
+
+{% macro page_item(href, label, active=false) -%}
+<li class="page-item {% if active %}active{% endif %}">
+  <a class="page-link px-3" href="{{ href }}">{{ label }}</a>
+</li>
+{%- endmacro %}

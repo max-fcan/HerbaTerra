@@ -1,90 +1,261 @@
+{# AI note: This template was realised with the help of AI. #}
 {% extends "base.html" %}
+{% from "partials/ui_macros.html" import button_link with context %}
 
 {% block title %}Play | HerbaTerra{% endblock %}
 {% block body_class %}play-page{% endblock %}
 
-{% block head_extras %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/pages/play.css') }}"
-/>
-{% endblock %}
+{% set next_href = next_round_url if has_next_round else restart_url %}
+{% set next_label = "Next round" if has_next_round else "New game" %}
+{% set round_title = (round.vernacular_name or round.scientific_name or round.species) if round is defined else '' %}
+{% if round_result %}
+  {% set result_distance = round_result.distance_text ~ ' away' if round_result.guess_latitude is not none else 'No guess submitted' %}
+  {% set result_location = round.country ~ (', ' ~ round.continent if round.continent else '') %}
+  {% set result_distance_help = 'How far your guess was from the recorded observation.' %}
+  {% set result_location_help = 'Use the reveal map to compare your guess, the answer marker, and the connecting line.' %}
+  {# Set result details based on the round result #}
+  {% if round_result.timed_out %}
+    {% set result_heading = 'Timed out' %}
+    {% set result_message = 'The timer ended before your guess could score, so this round counts as zero.' %}
+    {% set result_status = 'Late reveal' %}
+    {% set result_detail = 'Your marker is still shown on the map if you have placed one so you can compare it against the correct location.' %}
+  {% elif round_result.guess_latitude is none %}
+    {% set result_heading = 'No guess submitted' %}
+    {% set result_message = 'You revealed the round without placing a guess on the map.' %}
+    {% set result_status = 'No marker placed' %}
+    {% set result_detail = 'The map is centered on the answer so you can inspect where the observation actually came from.' %}
+  {% elif round_result.score >= 4500 %}
+    {% set result_heading = 'Excellent guess' %}
+    {% set result_message = 'You were very close to the correct location.' %}
+    {% set result_status = 'Top-tier accuracy' %}
+    {% set result_detail = 'This was a strong read. Your guess landed close enough to preserve almost all of the available points.' %}
+  {% elif round_result.score >= 3000 %}
+    {% set result_heading = 'Strong guess' %}
+    {% set result_message = 'You were in the right area, with a solid result.' %}
+    {% set result_status = 'High accuracy' %}
+    {% set result_detail = 'You found the right region. Tightening the final placement would push this into the top bracket.' %}
+  {% elif round_result.score >= 1500 %}
+    {% set result_heading = 'Decent guess' %}
+    {% set result_message = 'You found a reasonable area, but there is room to tighten the guess.' %}
+    {% set result_status = 'Moderate accuracy' %}
+    {% set result_detail = 'You were on the board, but the distance was large enough to cut into the score quickly.' %}
+  {% else %}
+    {% set result_heading = 'Far off' %}
+    {% set result_message = 'The guess was quite far from the correct location this round.' %}
+    {% set result_status = 'Low accuracy' %}
+    {% set result_detail = 'Consider studying the species distribution and habitat preferences to improve your guesses.' %}
+  {% endif %}
+{% endif %}
 
 {% block content %}
 <section class="play-shell" id="play-shell">
   {% if play_error %}
-  <div class="play-error-card">
-    <p>{{ play_error }}</p>
-    <a class="btn btn-theme btn-hub btn-hub-play rounded-pill" href="{{ url_for('pages.hub') }}"
-      >Back to Hub</a
-    >
+  <div class="container-xxl app-center-shell py-5">
+    <article class="app-panel play-error-card text-center">
+      <p class="app-kicker mb-3">Unable to start this round</p>
+      <p class="mb-4 text-body-secondary">{{ play_error }}</p>
+      <a class="btn btn-success rounded-pill px-4" href="{{ url_for('pages.hub') }}">&larr; Back to Hub</a>
+    </article>
   </div>
   {% else %}
-  <a class="play-back-link play-back-link-top-left" href="{{ url_for('pages.hub') }}">Back to Hub</a>
-  <div class="play-top-right">
-    <aside class="play-floating-card play-scope-card">{{ scope_display }}</aside>
-    <aside class="play-floating-card play-time-card" id="play-time-card">
-      <strong id="play-timer-value">{{ (timer_seconds // 60) if (timer_seconds // 60) > 0 else 0 }}m {{ (timer_seconds % 60) }}s</strong>
-    </aside>
+  <div class="container-xxl play-stage pt-2 pt-lg-2 pb-3 pb-lg-4">
+    <header class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+      {{ button_link(url_for('pages.hub'), '&larr; Back to Hub', 'btn-outline-light btn-sm rounded-pill') }}
+      <div class="d-flex flex-wrap gap-2">
+        <span class="app-panel play-chip">Round {{ current_round_index + 1 }}</span>
+        <span
+          class="app-panel play-chip{% if not round_result and seconds_remaining <= 20 %} play-timer-urgent{% endif %}"
+          id="play-time-card"
+        >
+          <strong id="play-timer-value">
+            {% if round_result %}
+            {{ timer_seconds }}s timer
+            {% else %}
+            {{ timer_display }}
+            {% endif %}
+          </strong>
+        </span>
+      </div>
+    </header>
+
+    <div class="play-layout">
+      <article class="app-panel overflow-hidden play-visual-panel">
+        <img class="play-photo" src="{{ round.image_url }}" alt="{{ round_title }}" />
+
+        <div class="play-round-chip">
+          <a
+            class="h5 d-inline-block mb-1 link-light text-decoration-underline"
+            href="{{ url_for('catalogue.catalogue_species', species_name=round.species) }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ round_title }}
+          </a>
+          <p class="small fst-italic text-body-secondary mb-3">{{ round.scientific_name or round.species }}</p>
+
+          {% if round_result %}
+          <a class="btn btn-success rounded-pill px-4 w-100" href="{{ next_href }}">{{ next_label }}</a>
+          {% else %}
+          <form id="play-guess-form" class="d-grid gap-0" method="post" action="{{ submit_guess_url }}">
+            <input type="hidden" name="round_index" value="{{ current_round_index }}" />
+            {# The JS map writes the current guess here before submit. #}
+            <input type="hidden" id="play-guess-latitude" name="guess_latitude" value="" />
+            <input type="hidden" id="play-guess-longitude" name="guess_longitude" value="" />
+            <button type="submit" id="play-submit-btn" class="btn btn-success rounded-pill px-4 w-100" disabled>
+              Submit guess
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </article>
+
+      <aside class="app-panel play-map-panel p-3">
+        <div id="play-map" class="play-map" aria-label="Map used to place or review a guess"></div>
+        <div class="play-selection-row mt-3">
+          <p id="play-selection-summary" class="small text-body-secondary mb-0">
+            {% if round_result %}
+            {% if round_result.guess_latitude is not none %}
+            {{ round_result.distance_text }} away
+            {% else %}
+            No guess submitted
+            {% endif %}
+            {% else %}
+            Select a point on the map to enable submission.
+            {% endif %}
+          </p>
+          {% if round_result %}
+          <button
+            type="button"
+            class="btn btn-outline-light btn-sm rounded-pill px-3 ms-auto flex-shrink-0"
+            data-play-result-open
+          >
+            View summary
+          </button>
+          {% endif %}
+        </div>
+
+        {% if not round_result %}
+        <noscript>
+          <p class="mb-0 mt-2 small text-warning-emphasis">
+            This page needs JavaScript for map-based guessing.
+          </p>
+        </noscript>
+        {% endif %}
+      </aside>
+    </div>
   </div>
 
-  <section class="play-map-card" id="play-map-panel">
-    <div class="play-map-toolbar">
-      <button type="button" id="play-submit-btn" class="play-submit-map-btn" disabled>Submit</button>
+  {% if not round_result %}
+  <aside
+    class="play-timeup-popup-shell"
+    id="play-timeup-popup"
+    aria-labelledby="play-timeup-title"
+    role="dialog"
+    aria-modal="false"
+    hidden
+  >
+    <article class="app-panel play-timeup-popup text-center">
       <button
         type="button"
-        id="play-map-expand-btn"
-        class="play-map-expand-btn"
-        aria-pressed="false"
-        aria-label="Expand map"
+        class="play-result-close"
+        data-play-timeup-close
+        aria-label="Close time up message"
       >
-        <svg
-          class="play-map-icon play-map-icon-expand"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 21h-5v-5" />
-        </svg>
-        <svg
-          class="play-map-icon play-map-icon-collapse"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M9 3H3v6M15 3h6v6M9 21H3v-6M21 21h-6v-6" />
-        </svg>
+        &times;
       </button>
-    </div>
-    <div id="play-map" class="play-map" aria-label="World map for making your guess"></div>
-  </section>
+      <p class="app-kicker mb-2">Round over</p>
+      <h2 class="h4 mb-2" id="play-timeup-title">Time is up</h2>
+      <p class="text-body-secondary mb-4 mx-auto play-result-lead">
+        The timer has ended. Reveal the round when you are ready to review the answer.
+      </p>
+      <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+        <button type="button" class="btn btn-outline-light rounded-pill px-4" data-play-timeup-close>
+          Keep exploring
+        </button>
+        <button type="submit" form="play-guess-form" class="btn btn-success rounded-pill px-4">
+          Reveal round
+        </button>
+      </div>
+    </article>
+  </aside>
+  {% else %}
+  <aside
+    class="play-result-popup-shell"
+    id="play-result-popup"
+    aria-labelledby="play-result-title"
+    role="dialog"
+    aria-modal="false"
+  >
+    <article class="app-panel play-result-popup">
+      <div
+        class="play-result-dragbar"
+        data-play-result-drag-handle
+        title="Drag to move"
+        aria-label="Drag summary panel"
+      >
+        <span class="play-result-drag-pill" aria-hidden="true"></span>
+      </div>
+      <button
+        type="button"
+        class="play-result-close"
+        data-play-result-close
+        aria-label="Close round summary"
+      >
+        &times;
+      </button>
+      <div class="text-center">
+          <p class="app-kicker mb-2">Round result</p>
+          <h2 class="h4 mb-2" id="play-result-title">{{ result_heading }}</h2>
+          <p class="text-body-secondary mb-4 mx-auto play-result-lead"><i>{{ result_message }}</i></p>
 
-  <article id="play-round-card" class="play-floating-card play-round-card is-hidden">
-    <div class="play-round-card-head">Round {{ current_round_index + 1 }} / {{ total_rounds }}</div>
-    <a
-      id="play-species-link"
-      class="play-species-link"
-      href="{{ url_for('catalogue.catalogue_species', species_name=round.species) }}"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {{ round.vernacular_name or round.scientific_name or round.species }}
-    </a>
-    <p class="play-species-subtitle">{{ round.scientific_name or round.species }}</p>
-    <div class="play-score-row">
-      <span>Score</span>
-      <strong id="play-score-value">--</strong>
-    </div>
-    {% if has_next_round %}
-    <a id="play-next-round-link" class="play-round-action-link" href="{{ next_round_url }}"
-      >Next round</a
-    >
-    {% else %}
-    <a id="play-next-round-link" class="play-round-action-link" href="{{ restart_url }}"
-      >New game</a
-    >
-    {% endif %}
-  </article>
+          <div class="play-result-score mb-4" aria-label="Round score">
+            <strong>{{ round_result.score }}</strong>
+            <span> / 5000 points</span>
+          </div>
+      </div>
+
+      <div class="play-result-metrics mb-3">
+        <article class="play-result-metric">
+          <div class="play-result-metric-head">
+            <span class="play-result-metric-label">Distance</span>
+            <span class="play-info-chip" tabindex="0" aria-label="{{ result_distance_help }}">
+              i
+              <span class="play-info-tooltip" role="tooltip">{{ result_distance_help }}</span>
+            </span>
+          </div>
+          <strong class="play-result-metric-value">{{ result_distance }}</strong>
+        </article>
+        <article class="play-result-metric">
+          <div class="play-result-metric-head">
+            <span class="play-result-metric-label">Outcome</span>
+            <span class="play-info-chip" tabindex="0" aria-label="{{ result_detail }}">
+              i
+              <span class="play-info-tooltip" role="tooltip">{{ result_detail }}</span>
+            </span>
+          </div>
+          <strong class="play-result-metric-value">{{ result_status }}</strong>
+        </article>
+        <article class="play-result-metric play-result-metric-wide">
+          <div class="play-result-metric-head">
+            <span class="play-result-metric-label">Actual location</span>
+            <span class="play-info-chip" tabindex="0" aria-label="{{ result_location_help }}">
+              i
+              <span class="play-info-tooltip" role="tooltip">{{ result_location_help }}</span>
+            </span>
+          </div>
+          <strong class="play-result-metric-value">{{ result_location }}</strong>
+        </article>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+        <button type="button" class="btn btn-outline-light rounded-pill px-4" data-play-result-close>
+          Hide summary
+        </button>
+        <a class="btn btn-success rounded-pill px-4" href="{{ next_href }}">{{ next_label }}</a>
+      </div>
+    </article>
+  </aside>
+  {% endif %}
   {% endif %}
 </section>
 {% endblock %}
@@ -93,24 +264,37 @@
 {% if not play_error %}
 <script>
   window.__playBootstrap = {
-    backgroundImageUrl: {{ round.image_url | tojson }},
     geojsonUrl: {{ geojson_url | tojson }},
-    submitGuessUrl: {{ submit_guess_url | tojson }},
-    scoreGuessUrl: {{ score_guess_url | tojson }},
-    nextRoundUrl: {{ next_round_url | tojson }},
-    restartUrl: {{ restart_url | tojson }},
-    hasNextRound: {{ has_next_round | tojson }},
     continentNamesByIsoCode: {{ continent_names_by_iso_code | tojson }},
-    timerSeconds: {{ timer_seconds | tojson }},
-    totalRounds: {{ total_rounds | tojson }},
-    currentRoundIndex: {{ current_round_index | tojson }},
     scope: {{ scope | tojson }},
-    solution: {
-      latitude: {{ round.latitude | tojson }},
-      longitude: {{ round.longitude | tojson }},
-      country: {{ round.country | tojson }},
-      continent: {{ round.continent | tojson }}
-    }
+    mode: {{ ('reveal' if round_result else 'guess') | tojson }},
+    timerSecondsRemaining: {{ seconds_remaining | tojson }},
+    guessForm: {
+      latitudeInputId: "play-guess-latitude",
+      longitudeInputId: "play-guess-longitude",
+      submitButtonId: "play-submit-btn",
+      selectionSummaryId: "play-selection-summary"
+    },
+    guess:
+      {% if round_result and round_result.guess_latitude is not none and round_result.guess_longitude is not none %}
+      {{ {
+        "latitude": round_result.guess_latitude,
+        "longitude": round_result.guess_longitude
+      } | tojson }}
+      {% else %}
+      null
+      {% endif %},
+    solution:
+      {% if round_result %}
+      {{ {
+        "latitude": round.latitude,
+        "longitude": round.longitude,
+        "country": round.country,
+        "continent": round.continent
+      } | tojson }}
+      {% else %}
+      null
+      {% endif %}
   };
 </script>
 <script type="module" src="{{ url_for('static', filename='js/play-map.js') }}"></script>

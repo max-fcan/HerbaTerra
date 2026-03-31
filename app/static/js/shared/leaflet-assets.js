@@ -1,3 +1,5 @@
+// AI note: This script was realised with the help of AI.
+// Third-party mapping library: Leaflet assets are loaded from the official unpkg CDN.
 export const LEAFLET_CSS_URL = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
 export const LEAFLET_CSS_INTEGRITY =
   "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";

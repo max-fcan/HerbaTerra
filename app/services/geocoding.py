@@ -8,7 +8,7 @@ from app.config import Config
 
 ISO_3166_CSV = Path(__file__).resolve().parent.parent / Config.DATA_DIR / "iso3166_country_codes_continents_modified.csv"
 
-# Faite par l'IA: assure la cohérence du dictionnaire chargé à partir du CSV.
+# AI-assisted structure that keeps the dictionary loaded from the CSV consistent.
 class _GeoLookup(TypedDict):
     continent_by_iso: dict[str, str]
     continent_name_by_code: dict[str, str]
@@ -17,22 +17,22 @@ class _GeoLookup(TypedDict):
     country_code_a2_by_code: dict[str, str]
     country_code_by_name: dict[str, str]
 
-# Variable globale pour stocker le lookup géographique, pour éviter de recharger le CSV à chaque requête.
+# Global variable storing the geographic lookup to avoid reloading the CSV on every request.
 _geo_lookup: _GeoLookup | None = None
 
 
 def _clean_str(value: str) -> str:
     """
-    Fonction utilitaire pour normaliser les clés de recherche.
+    Utility function that normalizes lookup keys.
     """
     return value.strip().lower()
 
 
 def _load_geo_lookup() -> _GeoLookup:
     """
-    Charger le lookup géographique à partir du CSV ISO-3166.
-    
-    Fonction faite avec l'IA.
+    Load the geographic lookup from the ISO-3166 CSV.
+
+    Built with AI assistance.
     """
     path: Path = ISO_3166_CSV
     if not path.exists():
@@ -55,7 +55,7 @@ def _load_geo_lookup() -> _GeoLookup:
             if not (continent and continent_code and code_a2 and country_name):
                 continue
 
-            # Les mettre dans les dictionnaires
+            # Store the values in the lookup dictionaries.
             continent_by_iso_code[code_a2] = continent
             country_name_by_code[code_a2] = country_name
             country_code_a2_by_code[code_a2] = code_a2
@@ -70,7 +70,7 @@ def _load_geo_lookup() -> _GeoLookup:
             normalized_country_name = _clean_str(country_name)
             country_code_by_name[normalized_country_name] = code_a2
 
-            # Implementé par l'IA.
+            # AI-implemented helper.
             #   Add practical aliases for UI/map names (e.g. "France" from
             #   "France, French Republic", and names without parenthetical notes).
             comma_alias = _clean_str(country_name.split(",")[0])
@@ -92,7 +92,7 @@ def _load_geo_lookup() -> _GeoLookup:
 
 def _get_geo_lookup() -> _GeoLookup:
     """
-    Fonction utilitaire pour accéder au lookup géographique.
+    Utility function that returns the geographic lookup.
     """
     global _geo_lookup
     if _geo_lookup is None:
@@ -101,38 +101,38 @@ def _get_geo_lookup() -> _GeoLookup:
 
 
 def get_continent_names_by_iso() -> dict[str, str]:
-    """Fonction utilitaire pour avoir un dictionnaire des noms de continent indexé par code ISO de pays."""
+    """Utility function that returns a dictionary of continent names indexed by country ISO code."""
     return dict(_get_geo_lookup()["continent_by_iso"])
 
 
 def get_country_name_by_code(code: str) -> str | None:
-    """Fonction utilitaire pour obtenir le nom de pays à partir d'un code de pays (A2 ou A3)."""
+    """Utility function that returns the country name from a country code (A2 or A3)."""
     if not code:
         return None
     return _get_geo_lookup()["country_name_by_code"].get(code.strip().upper())
 
 
 def get_country_code_by_name(name: str) -> str | None:
-    """Fonction utilitaire pour obtenir le code de pays à partir du nom de pays."""
+    """Utility function that returns the country code from the country name."""
     if not name:
         return None
     return _get_geo_lookup()["country_code_by_name"].get(_clean_str(name))
 
 
 def get_continent_name_by_code(code: str) -> str | None:
-    """Fonction utilitaire pour obtenir le nom de continent à partir du code de continent."""
+    """Utility function that returns the continent name from the continent code."""
     if not code:
         return None
     return _get_geo_lookup()["continent_name_by_code"].get(code.strip().upper())
 
 
 def get_continent_code_by_name(name: str) -> str | None:
-    """Fonction utilitaire pour obtenir le code de continent à partir du nom de continent."""
+    """Utility function that returns the continent code from the continent name."""
     if not name:
         return None
     return _get_geo_lookup()["continent_code_by_name"].get(_clean_str(name))
 
 
 def get_country_code_a2_by_code() -> dict[str, str]:
-    """Fonction utilitaire pour obtenir le code A2 d'un pays à partir des codes A2 ou A3."""
+    """Utility function that returns a country's A2 code from either its A2 or A3 code."""
     return dict(_get_geo_lookup()["country_code_a2_by_code"])

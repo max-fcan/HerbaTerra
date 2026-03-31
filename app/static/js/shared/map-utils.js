@@ -1,3 +1,4 @@
+// AI note: This script was realised with the help of AI.
 export function normalizeCode(value) {
   return String(value || "")
     .trim()

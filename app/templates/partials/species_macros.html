@@ -1,0 +1,49 @@
+{# AI note: This template was realised with the help of AI. #}
+{% macro summary_card(title, value) -%}
+<div class="col">
+  <article class="app-panel h-100 p-4 text-center">
+    <p class="app-kicker mb-2">{{ title }}</p>
+    <p class="display-6 mb-0">{{ value }}</p>
+  </article>
+</div>
+{%- endmacro %}
+
+{% macro location_chip(location) -%}
+<button
+  class="species-location-chip"
+  type="button"
+  data-country-code="{{ location.country_code or '' }}"
+  data-continent-code="{{ location.continent_code or '' }}"
+>
+  {{ location.country or 'Unknown country' }}
+  {% if location.continent %}<span>&middot; {{ location.continent }}</span>{% endif %}
+  <strong>{{ location.occurrence_count | human_number }}</strong>
+</button>
+{%- endmacro %}
+
+{% macro gallery_nav_button(button_id, label) -%}
+<button type="button" id="{{ button_id }}" class="species-gallery-btn species-gallery-btn--nav" aria-label="{{ label }} image">{{ label }}</button>
+{%- endmacro %}
+
+{% macro gallery_slide(image, species_name, index) -%}
+<article class="species-slide" data-gbifid="{{ image.gbifID }}" data-rowid="{{ image.rowid }}" data-country-code="{{ image.country_code or '' }}" data-continent-code="{{ image.continent_code or '' }}">
+  <button type="button" class="species-slide-open" data-open-lightbox="{{ index }}" aria-label="Open image in lightbox">
+    <img
+      loading="lazy"
+      src="{{ image.url_medium or image.url_original }}"
+      data-original-src="{{ image.url_original }}"
+      alt="{{ species_name }} image {{ index + 1 }}"
+    />
+  </button>
+
+  <div class="species-slide-meta">
+    <p>{{ image.country or "Unknown country" }}{% if image.state_province %} &middot; {{ image.state_province }}{% endif %}</p>
+    <p>{% if image.year %}{{ image.year }}{% if image.month %}-{{ "%02d"|format(image.month) }}{% endif %}{% else %}Unknown date{% endif %}</p>
+    <p class="species-slide-credit">{% if image.creator %}{{ image.creator }}{% endif %}{% if image.license %} &middot; {{ image.license }}{% endif %}</p>
+  </div>
+</article>
+{%- endmacro %}
+
+{% macro lightbox_nav(button_id, class_name, label) -%}
+<button type="button" class="species-lightbox-nav {{ class_name }}" id="{{ button_id }}" aria-label="{{ label }} image">{{ label }}</button>
+{%- endmacro %}

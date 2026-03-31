@@ -1,5 +1,8 @@
+// AI note: This script was realised with the help of AI.
 import * as THREE from "../vendor/three/three.module.js";
 
+// Adapted from the helper pattern used in bobbyroe/threejs-earth:
+// https://github.com/bobbyroe/threejs-earth
 export default function getStarfield({ numStars = 2000, spriteUrl }) {
     const verts = [];
     const colors = [];

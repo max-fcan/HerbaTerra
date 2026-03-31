@@ -1,285 +1,263 @@
+{# AI note: This template was realised with the help of AI. #}
 {% extends "base.html" %}
+{% from "partials/species_macros.html" import summary_card with context %}
+{% from "partials/ui_macros.html" import button_link, section_heading with context %}
 
 {% block title %}{{ species.species }} | HerbaTerra{% endblock %}
 {% block body_class %}species-page{% endblock %}
 
-{% block head_extras %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/pages/species.css') }}"
-/>
-{% endblock %}
+{% set summary_cards = [
+  {"title": "Observations", "value": species.occurrence_count | human_number},
+  {"title": "Images", "value": species.image_count | human_number}
+] %}
+{% set gallery = species.gallery %}
+{% set gallery_items = gallery["items"] %}
+{% set active_country_code = gallery_filters.country_code %}
+{% set active_continent_code = gallery_filters.continent_code %}
+
+{% macro species_page_url(images_page=None, country_code=None, continent_code=None) -%}
+{{ url_for(
+  'catalogue.catalogue_species',
+  species_name=species.species,
+  images_page=images_page,
+  country_code=country_code,
+  continent_code=continent_code
+) }}
+{%- endmacro %}
 
 {% block content %}
-<section class="species-shell container-fluid">
-  <a class="species-back-link" href="{{ url_for('catalogue.catalogue') }}">
-    <span class="species-back-arrow" aria-hidden="true">&larr;</span>
-    Back to catalogue
-  </a>
+<section class="container-xxl species-shell py-4">
+  {{ button_link(url_for('catalogue.catalogue'), '&larr; Back to catalogue', 'btn-outline-light btn-sm rounded-pill mb-4') }}
 
-  <header class="species-header">
-    {% if species.common_name_en %}
-    <h1 class="species-title">{{ species.common_name_en }}</h1>
-    {% endif %}
-    <p class="species-scientific"><em>{{ species.species }}</em></p>
-    <p class="species-taxonomy">{{ species.family }} &middot; {{ species.genus }}</p>
+  <header class="mb-4 mb-lg-5">
+    <p class="app-kicker mb-2">Species Profile</p>
+    <h1 class="display-6 mb-2">{{ species.common_name_en or species.species }}</h1>
+    <p class="lead mb-1"><em>{{ species.species }}</em></p>
+    <p class="text-body-secondary mb-0">{{ species.family }} &middot; {{ species.genus }}</p>
   </header>
 
-  <section class="species-summary-grid">
-    <div class="species-summary-stats-stack">
-      <article class="species-summary-card species-summary-card--compact">
-        <h2>Observations</h2>
-        <p>{{ species.occurrence_count | human_number }}</p>
-      </article>
-
-      <article class="species-summary-card species-summary-card--compact">
-        <h2>Images</h2>
-        <p>{{ species.image_count | human_number }}</p>
-      </article>
-
-      <a
-        class="species-summary-card species-summary-card--compact species-summary-card--learn"
-        href="https://www.google.com/search?q={{ species.species | urlencode }}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <h2>Learn More</h2>
-        <p>{{ species.species }}</p>
-      </a>
+  <section class="row g-3 align-items-stretch mb-4 mb-lg-5">
+    <div class="col-12 col-lg-4">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-1 g-3 h-100">
+        {% for card in summary_cards %}{{ summary_card(card.title, card.value) }}{% endfor %}
+        <div class="col">
+          <a
+            class="app-panel h-100 d-flex flex-column justify-content-center align-items-center gap-2 p-4 text-center text-decoration-none text-reset"
+            href="https://www.google.com/search?q={{ species.species | urlencode }}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <p class="app-kicker mb-0">Learn More</p>
+            <p class="mb-0 fw-semibold">{{ species.species }}</p>
+          </a>
+        </div>
+      </div>
     </div>
 
-    <div
-      class="species-summary-map"
-      id="speciesSummaryMap"
-      aria-label="Species distribution map"
-    ></div>
+    <div class="col-12 col-lg-8">
+      <div class="app-panel species-summary-map-panel h-100">
+        <div
+          class="species-summary-map"
+          id="speciesSummaryMap"
+          aria-label="Species distribution map"
+        ></div>
+      </div>
+    </div>
   </section>
 
-  <section class="species-locations">
-    <h2>Top locations</h2>
-    <div class="species-locations-controls">
-      <p class="species-locations-note" id="speciesLocationSummary"></p>
-
-      <button
-        class="species-locations-show-more"
-        id="speciesLocationShowMoreBtn"
-        type="button"
-        hidden
-      >
-        Show 10 more
-      </button>
-
-      <button
-        class="species-locations-show-more"
-        id="speciesLocationShowLessBtn"
-        type="button"
-        hidden
-      >
-        Show less
-      </button>
+  <section class="app-panel p-4 mb-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+      <div>
+        {{ section_heading('Top locations') }}
+        <p class="text-body-secondary mb-0">
+          Filter the gallery by country using the links below or by clicking a country on the map.
+        </p>
+      </div>
+      {% if active_country_code or active_continent_code %}
+      <a class="btn btn-outline-light btn-sm rounded-pill" href="{{ species_page_url() }}">Clear image filter</a>
+      {% endif %}
     </div>
 
-    <div class="species-location-chip-row" id="speciesLocationChips">
-      <button
-        class="species-location-chip species-location-chip--all is-active"
-        type="button"
-        data-country-code=""
-        data-continent-code=""
+    <div class="species-location-chip-row">
+      <a
+        class="species-location-chip {% if not active_country_code and not active_continent_code %}is-active{% endif %}"
+        href="{{ species_page_url() }}"
       >
-        All
-      </button>
-
+        All images
+      </a>
       {% for location in species.top_locations %}
-      <button
-        class="species-location-chip"
-        type="button"
-        data-country-code="{{ location.country_code or '' }}"
-        data-continent-code="{{ location.continent_code or '' }}"
+      <a
+        class="species-location-chip {% if active_country_code == (location.country_code or '') %}is-active{% endif %}"
+        href="{{ species_page_url(country_code=location.country_code or None) }}"
       >
         {{ location.country or 'Unknown country' }}
         {% if location.continent %}<span>&middot; {{ location.continent }}</span>{% endif %}
         <strong>{{ location.occurrence_count | human_number }}</strong>
-      </button>
+      </a>
       {% endfor %}
     </div>
   </section>
 
-  <section
-    class="species-gallery-shell"
-    id="speciesGalleryRoot"
-    data-images-api-url="{{ images_api_url }}"
-  >
-    <div class="species-gallery-header">
-      <h2>Image gallery</h2>
+  <section class="app-panel p-4 species-gallery-shell" id="species-gallery">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-4">
+      <div>
+        {{ section_heading('Image gallery') }}
+        <p class="text-body-secondary mb-0">
+          {% if active_country_code %}
+          Showing images from {{ gallery_filters.country or active_country_code }}.
+          {% elif active_continent_code %}
+          Showing images from {{ gallery_filters.continent or active_continent_code }}.
+          {% else %}
+          Showing the latest images for this species.
+          {% endif %}
+        </p>
+      </div>
+      <p class="mb-0 small text-body-secondary">
+        Page {{ gallery["page"] }} of {{ gallery["total_pages"] }}{% if gallery["total_images"] %} &middot; {{ gallery["total_images"] }} images{% endif %}
+      </p>
+    </div>
 
-      <div class="species-gallery-controls">
-        <label class="species-visible-count-control" for="speciesVisibleCount">
-          <span>Visible</span>
-          <input
-            id="speciesVisibleCount"
-            class="species-visible-count-range"
-            type="range"
-            min="1"
-            max="25"
-            step="1"
-            value="12"
+    {% if gallery_items %}
+    <div class="species-gallery-grid">
+      {% for image in gallery_items %}
+      {% set image_id = 'species-image-' ~ gallery["page"] ~ '-' ~ loop.index %}
+      <article class="species-gallery-card">
+        <a class="species-gallery-link" href="#{{ image_id }}">
+          <img
+            loading="lazy"
+            src="{{ image.url_medium or image.url_original }}"
+            alt="{{ species.species }} image {{ ((gallery["page"] - 1) * gallery["per_page"]) + loop.index }}"
           />
-          <output id="speciesVisibleCountValue" for="speciesVisibleCount">12</output>
-        </label>
-
-        <button
-          type="button"
-          id="speciesPrevBtn"
-          class="species-gallery-btn species-gallery-btn--nav"
-          aria-label="Previous image"
-        >
-          PREVIOUS
-        </button>
-
-        <button
-          type="button"
-          id="speciesPlayPauseBtn"
-          class="species-gallery-btn species-gallery-btn--playpause"
-          aria-label="Pause autoplay"
-        >
-          <span class="species-pp-icon" aria-hidden="true">
-            <span class="species-pp-bar"></span>
-            <span class="species-pp-bar"></span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          id="speciesNextBtn"
-          class="species-gallery-btn species-gallery-btn--nav"
-          aria-label="Next image"
-        >
-          NEXT
-        </button>
-      </div>
+        </a>
+        <div class="species-gallery-meta">
+          <p class="species-gallery-location">
+            {{ image.country or "Unknown country" }}{% if image.state_province %} &middot; {{ image.state_province }}{% endif %}
+          </p>
+          <p>
+            {% if image.year %}
+            {{ image.year }}{% if image.month %}-{{ "%02d"|format(image.month) }}{% endif %}
+            {% else %}
+            Unknown date
+            {% endif %}
+          </p>
+          <p class="species-gallery-credit">
+            {% if image.creator %}{{ image.creator }}{% endif %}{% if image.license %} &middot; {{ image.license }}{% endif %}
+          </p>
+        </div>
+      </article>
+      {% endfor %}
     </div>
 
-    <div class="species-carousel-wrap">
-      <div class="species-carousel" id="speciesCarousel">
-        {% for image in species.initial_images["items"] %}
-        <article
-          class="species-slide"
-          data-gbifid="{{ image.gbifID }}"
-          data-rowid="{{ image.rowid }}"
-          data-country-code="{{ image.country_code or '' }}"
-          data-continent-code="{{ image.continent_code or '' }}"
-        >
-          <button
-            type="button"
-            class="species-slide-open"
-            data-open-lightbox="{{ loop.index0 }}"
-            aria-label="Open image in lightbox"
-          >
+    <div class="species-lightbox-stack">
+      {% for image in gallery_items %}
+      {% set image_id = 'species-image-' ~ gallery["page"] ~ '-' ~ loop.index %}
+      {% set prev_id = 'species-image-' ~ gallery["page"] ~ '-' ~ (loop.index - 1 if not loop.first else loop.index) %}
+      {% set next_id = 'species-image-' ~ gallery["page"] ~ '-' ~ (loop.index + 1 if not loop.last else loop.index) %}
+      <section class="species-lightbox" id="{{ image_id }}">
+        <a class="species-lightbox-close" href="#species-gallery" aria-label="Close image">
+          <span aria-hidden="true">&times;</span>
+          <span class="species-visually-hidden">Close image</span>
+        </a>
+
+        <a class="species-lightbox-nav species-lightbox-prev" href="#{{ prev_id }}">Previous</a>
+
+        <figure class="species-lightbox-media">
+          <div class="species-lightbox-image-wrap">
             <img
-              loading="lazy"
-              src="{{ image.url_medium or image.url_original }}"
-              data-original-src="{{ image.url_original }}"
-              alt="{{ species.species }} image {{ loop.index }}"
+              src="{{ image.url_original or image.url_medium }}"
+              alt="{{ species.species }} image {{ ((gallery["page"] - 1) * gallery["per_page"]) + loop.index }}"
             />
-          </button>
-
-          <div class="species-slide-meta">
-            <p>
-              {{ image.country or "Unknown country" }}
-              {% if image.state_province %}
-              &middot; {{ image.state_province }}
-              {% endif %}
-            </p>
-            <p>
-              {% if image.year %}
-              {{ image.year }}{% if image.month %}-{{ "%02d"|format(image.month) }}{% endif %}
-              {% else %}
-              Unknown date
-              {% endif %}
-            </p>
-            <p class="species-slide-credit">
-              {% if image.creator %}{{ image.creator }}{% endif %}
-              {% if image.license %} &middot; {{ image.license }}{% endif %}
-            </p>
           </div>
-        </article>
+
+          <figcaption class="species-lightbox-caption">
+            <p class="species-lightbox-caption-location">
+              {{ image.country or "Unknown country" }}{% if image.state_province %} &middot; {{ image.state_province }}{% endif %}
+            </p>
+            <div class="species-lightbox-caption-meta">
+              {% if image.year %}
+              <span class="species-lightbox-caption-chip">
+                <span class="species-lightbox-caption-chip-label">Observed</span>
+                <span class="species-lightbox-caption-chip-value">
+                  {{ image.year }}{% if image.month %}-{{ "%02d"|format(image.month) }}{% endif %}
+                </span>
+              </span>
+              {% endif %}
+              {% if image.creator %}
+              <span class="species-lightbox-caption-chip">
+                <span class="species-lightbox-caption-chip-label">Creator</span>
+                <span class="species-lightbox-caption-chip-value">{{ image.creator }}</span>
+              </span>
+              {% endif %}
+              {% if image.license %}
+              <span class="species-lightbox-caption-chip">
+                <span class="species-lightbox-caption-chip-label">License</span>
+                <span class="species-lightbox-caption-chip-value">{{ image.license }}</span>
+              </span>
+              {% endif %}
+            </div>
+            {% if image.url_original %}
+            <a class="btn btn-outline-light btn-sm rounded-pill align-self-start" href="{{ image.url_original }}" target="_blank" rel="noopener noreferrer">
+              Open original image
+            </a>
+            {% endif %}
+          </figcaption>
+        </figure>
+
+        <a class="species-lightbox-nav species-lightbox-next" href="#{{ next_id }}">Next</a>
+      </section>
+      {% endfor %}
+    </div>
+    {% else %}
+    <article class="species-gallery-empty">
+      <h2 class="h5 mb-2">No images for this filter</h2>
+      <p class="text-body-secondary mb-0">
+        Try a different country filter or clear the current selection.
+      </p>
+    </article>
+    {% endif %}
+
+    {% if gallery["total_pages"] > 1 %}
+    <nav class="mt-4" aria-label="Species gallery pagination">
+      <ul class="pagination pagination-sm justify-content-center flex-wrap gap-2 mb-0">
+        {% if gallery["has_previous"] %}
+        <li class="page-item">
+          <a class="page-link" href="{{ species_page_url(images_page=gallery["page"] - 1, country_code=active_country_code or None, continent_code=active_continent_code or None) }}">Previous</a>
+        </li>
+        {% endif %}
+
+        {% set start_page = [1, gallery["page"] - 2] | max %}
+        {% set end_page = [gallery["total_pages"], gallery["page"] + 2] | min %}
+        {% for page_number in range(start_page, end_page + 1) %}
+        <li class="page-item {% if page_number == gallery["page"] %}active{% endif %}">
+          <a class="page-link" href="{{ species_page_url(images_page=page_number, country_code=active_country_code or None, continent_code=active_continent_code or None) }}">{{ page_number }}</a>
+        </li>
         {% endfor %}
-      </div>
-    </div>
+
+        {% if gallery["has_next"] %}
+        <li class="page-item">
+          <a class="page-link" href="{{ species_page_url(images_page=gallery["page"] + 1, country_code=active_country_code or None, continent_code=active_continent_code or None) }}">Next</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
   </section>
-</section>
-
-<section class="species-lightbox" id="speciesLightbox" hidden>
-  <button
-    type="button"
-    class="species-lightbox-close"
-    id="speciesLightboxClose"
-    aria-label="Close lightbox"
-    title="Close lightbox"
-  >
-    <span aria-hidden="true">&times;</span>
-    <span class="species-visually-hidden">Close lightbox</span>
-  </button>
-
-  <button
-    type="button"
-    class="species-lightbox-nav species-lightbox-prev"
-    id="speciesLightboxPrev"
-    aria-label="Previous image"
-  >
-    Previous
-  </button>
-
-  <figure class="species-lightbox-media">
-    <div class="species-lightbox-image-wrap">
-      <img id="speciesLightboxImage" src="" alt="" />
-      <div
-        class="species-lightbox-loading"
-        id="speciesLightboxLoading"
-        role="status"
-        aria-live="polite"
-        hidden
-      >
-        <span class="species-lightbox-spinner" aria-hidden="true"></span>
-        <span>Loading image...</span>
-      </div>
-    </div>
-
-    <figcaption id="speciesLightboxCaption" class="species-lightbox-caption"></figcaption>
-  </figure>
-
-  <button
-    type="button"
-    class="species-lightbox-nav species-lightbox-next"
-    id="speciesLightboxNext"
-    aria-label="Next image"
-  >
-    Next
-  </button>
 </section>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
 <script>
   window.__speciesPageBootstrap = {
     map: {
       geojsonUrl: {{ geojson_url | tojson }},
-      mapStatsApiUrl: {{ map_stats_api_url | tojson }},
       countryCodeA2ByIsoCode: {{ country_code_a2_by_iso_code | tojson }},
       countryStats: {{ species.country_map_stats | tojson }},
       commonName: {{ species.common_name_en | tojson }},
-      scientificName: {{ species.species | tojson }}
-    },
-    gallery: {
-      apiUrl: {{ images_api_url | tojson }},
-      images: {{ species.initial_images["items"] | tojson }},
-      speciesName: {{ species.species | tojson }},
-      hasMore: {{ species.initial_images["has_more"] | tojson }},
-      nextCursorGbifid: {{ species.initial_images["next_cursor_gbifid"] | tojson }},
-      nextCursorRowid: {{ species.initial_images["next_cursor_rowid"] | tojson }}
+      scientificName: {{ species.species | tojson }},
+      filterBaseUrl: {{ species_url | tojson }},
+      activeCountryCode: {{ active_country_code | tojson }}
     }
   };
 </script>
-<script src="{{ url_for('static', filename='js/species-page.js') }}" defer></script>
+<script type="module" src="{{ url_for('static', filename='js/species-page.js') }}"></script>
 {% endblock %}

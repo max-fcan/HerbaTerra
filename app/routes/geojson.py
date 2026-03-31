@@ -8,9 +8,9 @@ bp = Blueprint("geo", __name__, url_prefix="/geojson")
 @bp.get("/<filename>")
 def geojson_file(filename: str):
     """
-    Fonction implementée par l'IA.
-    Servir les fichiers GeoJSON de manière sécurisée en vérifiant que le fichier demandé est dans la liste des fichiers autorisés et existe dans le répertoire de données.
-    Niveau de détail paramétrable via la configuration (config.py).
+    AI-implemented helper.
+    Serve GeoJSON files safely by checking that the requested file is allowed and exists in the data directory.
+    The detail level is configurable via config.py.
     """
     allowed_files = set(current_app.config["_MAP_GEOJSON_FILES"].values())
     if filename not in allowed_files or not (

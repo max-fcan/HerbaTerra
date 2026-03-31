@@ -1,3 +1,4 @@
+// AI note: This script was realised with the help of AI.
 import { loadLeafletAssets } from "./shared/leaflet-assets.js";
 import { getCountryCodeA2FromProps, normalizeIsoCode } from "./shared/map-utils.js";
 

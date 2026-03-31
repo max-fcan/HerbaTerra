@@ -24,7 +24,7 @@ def start():
 
 @bp.get("/hub")
 def hub():
-    """Affiche la page centrale du site, avec la carte interactive et les hubs de recherche."""
+    """Render the site's central hub page with the interactive map and search hubs."""
     selected_geojson_file = current_app.config["MAP_GEOJSON_FILE"]
     try:
         continent_names_by_iso_code = get_continent_names_by_iso()
@@ -55,5 +55,5 @@ def hub():
 
 @bp.get("/about")
 def about():
-    """Affiche la page 'À propos' du site. Contient des informations sur le projet, les sources de données, les crédits, etc."""
+    """Render the site's About page with project details, data sources, credits, and related information."""
     return render_template("about.html")

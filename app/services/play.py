@@ -24,15 +24,15 @@ ROUNDING_TARGET_RATIO = (MAX_ROUND_SCORE - 0.5) / MAX_ROUND_SCORE
 
 def _clean_str(value: Any) -> str:
     """
-    Fonction utilitaire pour nettoyer les chaînes de caractères.
+    Utility function that cleans string values.
     """
     return "" if value is None else str(value).strip()
 
 
 def _format_vernacular_name(raw_name: str, scientific_name: str) -> str:
     """
-    Mettre le nom vernacular en title case, enlever le nom de genre entre parenthèses s'il est présent.
-    Fonction faite avec l'IA.
+    Convert the vernacular name to title case and remove the genus name in parentheses when present.
+    Built with AI assistance.
     """
     vernacular = _clean_str(raw_name)
     if not vernacular:
@@ -50,11 +50,11 @@ def _format_vernacular_name(raw_name: str, scientific_name: str) -> str:
 @lru_cache(maxsize=1)
 def _get_available_world_continent_codes() -> list[str]:
     """
-    Récupérer la liste des codes de continent disponibles dans la base de données.
+    Return the list of continent codes available in the database.
     """
     continent_names_by_iso = get_continent_names_by_iso()
     
-    # Get existing country codes from the species_country_stats table
+    # Get existing country codes from the species_country_stats table.
     existing_country_codes = get_local_db().execute(
         """
         SELECT DISTINCT country_code
@@ -73,7 +73,7 @@ def _get_available_world_continent_codes() -> list[str]:
 
 def parse_play_scope(args: Any) -> dict[str, str]:
     """
-    Analyser les paramètres de portée pour déterminer le type de portée et les codes associés.
+    Parse scope parameters to determine the scope type and associated codes.
     """
     country_code = _clean_str(args.get("country_code")).upper()
     continent_code = _clean_str(args.get("continent_code")).upper()
@@ -114,7 +114,7 @@ def parse_play_scope(args: Any) -> dict[str, str]:
 
 def _build_world_weights(continent_codes: list[str], antarctica_probability: float = 0.05) -> list[float]:
     """
-    Construire une liste de poids pour les continents, en donnant une probabilité spécifique à l'Antarctique et répartissant le reste de manière égale entre les autres continents.
+    Build continent weights, giving Antarctica a specific probability and distributing the remainder evenly across the other continents.
     """
     if not continent_codes:
         return []
@@ -131,9 +131,9 @@ def build_round_plan(
     world_antarctica_probability: float = 1/20,
 ) -> list[dict[str, Any]]:
     """
-    Construire un plan de jeu pour les rounds. 
+    Build the round plan for the game.
     """
-    round_count = max(1, int(total_rounds))         # Assurer qu'il y a au moins 1 round
+    round_count = max(1, int(total_rounds))  # Ensure there is at least 1 round.
     scope_type = scope.get("scope_type") or WORLD_SCOPE
 
     if scope_type == WORLD_SCOPE:
@@ -175,7 +175,7 @@ def haversine_distance_km(
     longitude_b: float,
 ) -> float:
     """
-    Calculer la distance haversine en kilomètres entre deux points.
+    Calculate the haversine distance in kilometers between two points.
     """
     earth_radius_km = 6371.0
     delta_latitude = radians(latitude_b - latitude_a)
@@ -193,7 +193,7 @@ def haversine_distance_km(
 @lru_cache(maxsize=256)
 def _get_scope_scale_meters_cached(country_code: str, continent_code: str) -> float:
     """
-    Estimer l'échelle d'un scope en mètres via la diagonale de sa bounding box.
+    Estimate a scope's scale in meters using the diagonal of its bounding box.
     """
     conditions = [
         "latitude IS NOT NULL",
@@ -246,7 +246,7 @@ def _get_scope_scale_meters_cached(country_code: str, continent_code: str) -> fl
 
 def get_scope_scale_meters(scope: dict[str, Any]) -> float:
     """
-    Récupérer l'échelle (en mètres) d'un scope.
+    Return the scale of a scope in meters.
     """
     country_code = _clean_str(scope.get("country_code")).upper()
     continent_code = _clean_str(scope.get("continent_code")).upper()
@@ -255,9 +255,9 @@ def get_scope_scale_meters(scope: dict[str, Any]) -> float:
 
 def compute_geoguessr_score(distance_km: float, scale_meters: float) -> int:
     """
-    Calculer le score selon la formule de GeoGuessr.
-    150 m → 5000 points sur toutes les portées (world, continent, pays).
-    L'échelle est ignorée dans l'exposant : seule la distance compte.
+    Compute the score using the GeoGuessr-style formula.
+    150 m yields 5000 points for every scope size (world, continent, country).
+    Scale is ignored in the exponent; only distance matters.
     """
     safe_distance_km = max(0.0, float(distance_km))
     raw_score = MAX_ROUND_SCORE * pow(

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 DEVELOPMENT_ENV = ".env"
 PRODUCTION_ENV = ".env.production"
 
-# Fonctions utilitaires pour lire les variables d'environnement avec des types spécifiques et des valeurs par défaut
+# Utility functions for reading environment variables with specific types and default values
 
 def _env_path(name: str, default: Path) -> Path:
     """Get an environment variable as a Path. If the variable is not set, return the default. If the variable is set but empty, also return the default."""
@@ -59,34 +59,34 @@ def _env_choice(name: str, default: str, allowed: set[str]) -> str:
 
 
 class Config:
-    BASE_DIR = Path(__file__).resolve().parents[1]  # project root, peu importe où il est
+    BASE_DIR = Path(__file__).resolve().parents[1]  # Project root, regardless of where the file lives
 
     load_dotenv(Path(BASE_DIR) / PRODUCTION_ENV)
         
-    # ================ Paramètres de l'applicaiton ================
+    # ================ Application settings ================
     SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key")
     PORT = _env_int("PORT", 5000)
     DEBUG = _env_bool("FLASK_DEBUG", False)
 
-    # ================ Paramètres des logs ================
+    # ================ Logging settings ================
     LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG" if DEBUG else "INFO").upper()
     LOG_DIR = _env_path("LOG_DIR", BASE_DIR / "logs")
     LOG_FILE = _env_path("LOG_FILE", LOG_DIR / "app.log")
 
-    # ================ Fichiers et Dossiers ================
+    # ================ Files and directories ================
     DATA_DIR = _env_path("DATA_DIR", BASE_DIR / "data")
-    LOCAL_DB_PATH = _env_path("LOCAL_DB_PATH", BASE_DIR / "temp" / "plants.db") # Garder dans temp pour éviter de polluer le repo avec des fichiers générés
+    LOCAL_DB_PATH = _env_path("LOCAL_DB_PATH", BASE_DIR / "temp" / "plants.db")  # Keep this in temp to avoid polluting the repo with generated files
 
 
-    # ================ Paramètres pour la base Turso ================
+    # ================ Turso database settings ================
     # TURSO500_DATABASE_URL = os.getenv("TURSO500_DATABASE_URL", "")
     # TURSO500_AUTH_TOKEN = os.getenv("TURSO500_AUTH_TOKEN", "")
     TURSO100_DATABASE_URL = os.getenv("TURSO100_DATABASE_URL", "")
     TURSO100_AUTH_TOKEN = os.getenv("TURSO100_AUTH_TOKEN", "")
 
-    # Résolutions disponibles
+    # Available resolutions
     _MAP_GEOJSON_FILES = {
-        # "high": "countries_high_resolution.geojson", # Trop gros pour pouvoir être rendu
+        # "high": "countries_high_resolution.geojson",  # Too large to render
         "medium": "countries_medium_resolution.geojson",
         "low": "countries_low_resolution.geojson",
     }
@@ -94,7 +94,7 @@ class Config:
     MAP_GEOJSON_RESOLUTION = _env_choice("MAP_GEOJSON_RESOLUTION", "medium", set(_MAP_GEOJSON_FILES.keys()))
     MAP_GEOJSON_FILE = _MAP_GEOJSON_FILES[MAP_GEOJSON_RESOLUTION]
 
-    # ================ Paramètres de jeu ================
+    # ================ Game settings ================
     PLAY_ROUNDS = _env_int("PLAY_ROUNDS", 4)
     PLAY_GUESS_SECONDS = _env_int("PLAY_GUESS_SECONDS", 60)
     PLAY_REVEAL_AFTER_SUBMIT = _env_bool("PLAY_REVEAL_AFTER_SUBMIT", True)
@@ -105,25 +105,25 @@ class Config:
 
 class DevelopmentConfig(Config):
     """
-    Utiliser cette configuration pour le développement local et le debugging pour voir les logs détaillés.
+    Use this configuration for local development and debugging with detailed logs.
     """
     
     DEBUG = True
     LOG_LEVEL = "DEBUG"
 
-    LOCAL_DB_PATH = Config.BASE_DIR / "temp/petit" / "plants.db" # Un petit fichier de test pour le développement
+    LOCAL_DB_PATH = Config.BASE_DIR / "temp/petit" / "plants.db"  # A small test database for development
 
 
-class TestConfig(Config): # Pourra être utilisé pour des tests d'intégration plus tard
+class TestConfig(Config):  # Can be used for integration tests later
     DEBUG = True
     LOG_LEVEL = "DEBUG"
         
     
 class ProductionConfig(Config):
     """
-    Utiliser cette configuration pour la production. Les logs seront moins détaillés pour éviter de polluer les logs avec des informations de debug.
+    Use this configuration for production. Logs are less verbose to avoid noise from debug information.
     """    
     DEBUG = False
     LOG_LEVEL = "INFO"
     
-    WERKZEUG_LOG_LEVEL = "WARNING"  # Réduire le niveau de log pour supprimer les logs de requêtes HTTP
+    WERKZEUG_LOG_LEVEL = "WARNING"  # Lower the log level to suppress HTTP request logs
