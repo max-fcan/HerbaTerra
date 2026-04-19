@@ -52,6 +52,7 @@
             name="q"
             value="{{ active_filters.q }}"
             placeholder="Species, family, genus, common name"
+            autocomplete="off"
           />
         </div>
 
@@ -118,4 +119,14 @@
   </nav>
   {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelector('.catalogue-filters').addEventListener('submit', function () {
+    var btn = document.querySelector('.catalogue-submit');
+    btn.disabled = true;
+    btn.textContent = 'Loading\u2026';
+  });
+</script>
 {% endblock %}

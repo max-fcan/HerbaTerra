@@ -21,7 +21,7 @@
   --color-species-map-hover-stroke: #3b2a2a;
   --color-species-map-active-stroke: #2d1616;
 
-  --bs-body-font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  --bs-body-font-family: "Inter", "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
   --bs-body-bg: var(--app-bg);
   --bs-body-color: #edf5ec;
   --bs-border-color: var(--app-border);
@@ -102,12 +102,14 @@ a {
   position: relative;
   z-index: 1;
   min-height: 100vh;
+  min-height: 100dvh;
   box-sizing: border-box;
   padding-top: var(--nav-height);
 }
 
 .app-stage {
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
 }
 
 .app-nav {
@@ -129,9 +131,7 @@ a {
 .app-panel {
   border: 1px solid var(--app-border);
   border-radius: 1.25rem;
-  background:
-    radial-gradient(circle at top left, rgba(155, 208, 130, 0.08), transparent 32%),
-    var(--app-panel-bg);
+  background: var(--app-panel-bg);
   box-shadow: var(--app-shadow);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
@@ -140,7 +140,7 @@ a {
 .app-kicker {
   margin: 0;
   color: var(--app-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -149,6 +149,7 @@ a {
   display: grid;
   place-items: center;
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
 }
 
 .navbar .nav-link.active {
@@ -165,8 +166,9 @@ a {
   max-width: 40rem;
   overflow: visible;
   border-radius: 1.5rem;
-  background: linear-gradient(135deg, rgba(5, 11, 17, 0.44), rgba(5, 11, 17, 0.14));
+  background: linear-gradient(135deg, rgba(5, 11, 17, 0.44), rgba(5, 11, 17, 0.8));
   box-shadow: var(--app-shadow);
+  transform: translateY(-8%);
 }
 
 .landing-frame::before {
@@ -175,7 +177,6 @@ a {
   inset: 0;
   border: 1px solid var(--app-border-strong);
   border-radius: inherit;
-  transform: translateY(-7%);
   pointer-events: none;
 }
 
@@ -302,6 +303,7 @@ a {
 
 .hub-shell {
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
 }
 
 .hub-map-panel {
@@ -409,8 +411,22 @@ a {
   font-size: 0.95rem;
 }
 
-.leaflet-popup-content-wrapper {
+/*
+ * Leaflet CSS loads dynamically after app.css (injected via JS), so its
+ * one-class rules (.leaflet-popup-content-wrapper) would win on background/color.
+ * Two-class selectors here (.leaflet-container .leaflet-popup-*) have higher
+ * specificity and win regardless of stylesheet load order.
+ */
+.leaflet-container .leaflet-popup-content-wrapper {
   border-radius: 1rem;
+  background: var(--app-panel-bg-strong);
+  color: var(--bs-body-color);
+  border: 1px solid var(--app-border-strong);
+  box-shadow: var(--app-shadow);
+}
+
+.leaflet-container .leaflet-popup-tip {
+  background: var(--app-panel-bg-strong);
 }
 
 .popup-country > strong {
@@ -419,7 +435,7 @@ a {
 
 .popup-country-code {
   margin-top: 0.1rem;
-  color: #53685d;
+  color: var(--app-text-muted);
   font-size: 0.82rem;
 }
 
@@ -438,17 +454,18 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2rem;
+  min-height: 2.75rem;
   padding: 0.35rem 0.75rem;
-  border: 1px solid rgba(60, 97, 68, 0.24);
-  background: #eff9ea;
-  color: #1d4d2c;
+  border: 1px solid var(--app-border-strong);
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
   font-weight: 600;
   text-decoration: none;
 }
 
 .popup-link:hover {
-  background: #f8fcf5;
+  background: rgba(155, 208, 130, 0.24);
+  color: var(--app-accent);
 }
 
 .popup-link-main {
@@ -495,7 +512,8 @@ a {
 .popup-link-option {
   width: 100%;
   border-radius: 0;
-  background: #f7fcf5;
+  background: var(--app-panel-bg-strong);
+  color: var(--app-accent);
 }
 
 .popup-link-option:last-child {
@@ -518,6 +536,7 @@ a {
 .play-shell {
   position: relative;
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
   overflow: hidden;
   background:
     radial-gradient(circle at top, rgba(155, 208, 130, 0.1), transparent 32%),
@@ -528,6 +547,7 @@ a {
   display: flex;
   flex-direction: column;
   height: calc(100vh - var(--nav-height));
+  height: calc(100dvh - var(--nav-height));
 }
 
 .play-chip {
@@ -714,14 +734,12 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--bs-body-color);
-  font-size: 1.2rem;
-  line-height: 1;
   transition: background 0.18s ease, border-color 0.18s ease;
 }
 
@@ -783,7 +801,7 @@ a {
 
 .play-result-metric-label {
   color: var(--app-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -795,8 +813,8 @@ a {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border: 1px solid rgba(155, 208, 130, 0.34);
   border-radius: 999px;
   background: rgba(155, 208, 130, 0.12);
@@ -855,26 +873,26 @@ a {
 }
 
 .play-solution-title {
-  color: #547262;
-  font-size: 0.72rem;
+  color: var(--app-text-muted);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .play-solution-country {
-  color: #173322;
+  color: var(--bs-body-color);
   font-weight: 700;
 }
 
 .play-solution-coordinates {
-  color: #35513f;
+  color: var(--app-text-muted);
   font-size: 0.84rem;
   line-height: 1.35;
 }
 
 .play-solution-distance {
-  color: #35513f;
+  color: var(--app-text-muted);
   font-size: 0.84rem;
 }
 
@@ -885,7 +903,7 @@ a {
 
 .catalogue-filters .form-label {
   color: var(--app-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1377,7 +1395,7 @@ a {
 
 .species-lightbox-caption-chip-label {
   color: var(--app-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1415,7 +1433,7 @@ a {
 .app-nav-link {
   display: inline-flex;
   align-items: center;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0.45rem 0.9rem;
   border-radius: 999px;
   color: var(--app-text-muted);
@@ -1440,21 +1458,18 @@ a {
   position: relative;
 }
 
-.app-nav-menu > summary {
+.app-nav-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0.45rem 1rem;
   border: 1px solid var(--app-border);
   border-radius: 999px;
   background: rgba(8, 16, 24, 0.72);
+  color: var(--bs-body-color);
+  font: inherit;
   cursor: pointer;
-  list-style: none;
-}
-
-.app-nav-menu > summary::-webkit-details-marker {
-  display: none;
 }
 
 .app-nav-menu-panel {

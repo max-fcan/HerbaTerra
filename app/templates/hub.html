@@ -20,7 +20,8 @@
     "cta": "Daily Challenge (WIP)",
     "href": "#",
     "image": "img/daily_challenge.jpg",
-    "button_class": "btn-outline-light"
+    "button_class": "btn-outline-light",
+    "disabled": true
   }
 ] %}
 <section class="container-xxl hub-shell py-4">
@@ -50,7 +51,11 @@
             <div class="p-4">
               <p class="app-kicker mb-3">{{ card.eyebrow }}</p>
               <h2 class="h4 mb-3">{{ card.title }}</h2>
-              <a class="btn {{ card.button_class }} rounded-pill px-4" href="{{ card.href }}">{{ card.cta }}</a>
+              <a
+              class="btn {{ card.button_class }} rounded-pill px-4{% if card.disabled %} disabled{% endif %}"
+              href="{{ card.href }}"
+              {% if card.disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+            >{{ card.cta }}</a>
             </div>
           </article>
         </div>

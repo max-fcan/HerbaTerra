@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import csv
 import random
 import re
 from functools import lru_cache
 from math import asin, cos, pow, radians, sin, sqrt
+from pathlib import Path
 from typing import Any
 
 from app.db.connections import get_local_db
@@ -18,7 +20,11 @@ WORLD_SCOPE = "world"
 CONTINENT_SCOPE = "continent"
 COUNTRY_SCOPE = "country"
 MAX_ROUND_SCORE = 5000
-WORLD_PERFECT_DISTANCE_METERS = 150.0
+# World-scope anchor: the scale used when the entire Earth is the play area.
+# All country scopes produce a strictly smaller scale (harder scoring) via
+# sqrt(country_area / EARTH_AREA_KM2).
+MIN_REFERENCE_DISTANCE_METERS = 150.0
+EARTH_AREA_KM2 = 510_072_000.0
 ROUNDING_TARGET_RATIO = (MAX_ROUND_SCORE - 0.5) / MAX_ROUND_SCORE
 
 
@@ -45,6 +51,30 @@ def _format_vernacular_name(raw_name: str, scientific_name: str) -> str:
 
     vernacular = re.sub(r"\s+", " ", vernacular).strip(" -_,.;:")
     return vernacular.title()
+
+
+@lru_cache(maxsize=1)
+def _load_country_areas_by_code() -> dict[str, float]:
+    """
+    Load country areas from the CSV keyed by ISO country code.
+    """
+    country_areas_path = Path(__file__).resolve().parents[2] / "data" / "country_areas.csv"
+    country_areas: dict[str, float] = {}
+
+    with country_areas_path.open("r", encoding="utf-8-sig", newline="") as csv_file:
+        reader = csv.DictReader(csv_file)
+        for row in reader:
+            country_code = _clean_str(row.get("country_code")).upper()
+            area_square_km_raw = row.get("area_square_km")
+            try:
+                area_square_km = float(area_square_km_raw) if area_square_km_raw else 0.0
+            except (TypeError, ValueError):
+                area_square_km = 0.0
+            if country_code and area_square_km > 0:
+                country_areas[country_code] = area_square_km
+
+    return country_areas
+
 
 
 @lru_cache(maxsize=1)
@@ -193,55 +223,20 @@ def haversine_distance_km(
 @lru_cache(maxsize=256)
 def _get_scope_scale_meters_cached(country_code: str, continent_code: str) -> float:
     """
-    Estimate a scope's scale in meters using the diagonal of its bounding box.
+    Return the scoring distance scale in meters for the current scope.
+
+    MIN_REFERENCE_DISTANCE_METERS is the anchor for the full Earth (world scope).
+    Country scopes scale down proportionally to sqrt(country_area / EARTH_AREA_KM2),
+    so they are always strictly smaller — meaning larger per-km penalties and harder
+    scoring — than the world scope. The floor of 1.0 m only guards against
+    division-by-zero for micro-territories; it never affects normal countries.
     """
-    conditions = [
-        "latitude IS NOT NULL",
-        "longitude IS NOT NULL",
-    ]
-    params: list[Any] = []
-
     if country_code:
-        conditions.append("UPPER(country_code) = ?")
-        params.append(country_code)
-    elif continent_code:
-        conditions.append("UPPER(continent_code) = ?")
-        params.append(continent_code)
-
-    row = get_local_db().execute(
-        f"""
-        SELECT
-            MIN(latitude) AS min_latitude,
-            MAX(latitude) AS max_latitude,
-            MIN(longitude) AS min_longitude,
-            MAX(longitude) AS max_longitude
-        FROM occurrences
-        WHERE {" AND ".join(conditions)}
-        """,
-        params,
-    ).fetchone()
-    if not row:
-        return 1_000.0
-
-    min_latitude = row["min_latitude"]
-    max_latitude = row["max_latitude"]
-    min_longitude = row["min_longitude"]
-    max_longitude = row["max_longitude"]
-    if (
-        min_latitude is None
-        or max_latitude is None
-        or min_longitude is None
-        or max_longitude is None
-    ):
-        return 1_000.0
-
-    diagonal_km = haversine_distance_km(
-        float(min_latitude),
-        float(min_longitude),
-        float(max_latitude),
-        float(max_longitude),
-    )
-    return max(1_000.0, diagonal_km * 1_000.0)
+        country_area_km2 = _load_country_areas_by_code().get(country_code)
+        if country_area_km2:
+            scale = MIN_REFERENCE_DISTANCE_METERS * max(0.5, (country_area_km2 / EARTH_AREA_KM2) ** 0.25) # After testing. Gives a more balanced scoring curve
+            return max(1.0, scale)
+    return MIN_REFERENCE_DISTANCE_METERS
 
 
 def get_scope_scale_meters(scope: dict[str, Any]) -> float:
@@ -255,14 +250,14 @@ def get_scope_scale_meters(scope: dict[str, Any]) -> float:
 
 def compute_geoguessr_score(distance_km: float, scale_meters: float) -> int:
     """
-    Compute the score using the GeoGuessr-style formula.
-    150 m yields 5000 points for every scope size (world, continent, country).
-    Scale is ignored in the exponent; only distance matters.
+    Compute the score using the original exponential curve, with the scope
+    scale applied linearly to the distance term.
     """
     safe_distance_km = max(0.0, float(distance_km))
+    effective_scale_meters = max(1.0, float(scale_meters))
     raw_score = MAX_ROUND_SCORE * pow(
         ROUNDING_TARGET_RATIO,
-        (safe_distance_km * 1000) / WORLD_PERFECT_DISTANCE_METERS,
+        (safe_distance_km * 1000.0) / effective_scale_meters,
     )
     return int(raw_score + 0.5)
 

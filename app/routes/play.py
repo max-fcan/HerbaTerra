@@ -316,7 +316,7 @@ def submit_round():
         else 0
     )
 
-    current_app.logger.info(
+    current_app.logger.debug(
         "Play round submitted: round_index=%s timed_out=%s guess=(%r,%r) solution=(%.6f,%.6f) score=%s",
         round_index,
         timed_out,
