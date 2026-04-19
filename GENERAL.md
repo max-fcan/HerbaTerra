@@ -19,7 +19,7 @@ HerbaTerra is a Flask application for exploring global plant occurrence data thr
 | Mapping | Leaflet, OpenStreetMap tiles, GeoJSON |
 | 3D landing page | Three.js |
 
-## Running locally
+## Quickstart
 
 ### 1. Create the virtual environment
 
